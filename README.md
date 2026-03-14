@@ -11,8 +11,8 @@ Built for the **[Gemini Live Agent Challenge](https://geminiliveagentchallenge.d
 ---
 
 ## 🔗 Live Demo
-**[https://your-cloudrun-url.run.app](https://your-cloudrun-url.run.app)**
-*(Replace with your deployed Cloud Run URL)*
+**[[https://your-cloudrun-url.run.app](https://ventlive-ai-270502917056.us-central1.run.app)]([https://your-cloudrun-url.run.app](https://ventlive-ai-270502917056.us-central1.run.app))**
+
 
 ## 📺 Demo Video
 **[YouTube — VentLive AI Demo](https://youtube.com/your-link)**
