@@ -1,0 +1,98 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# .dockerignore — VentLive AI
+#
+# Excludes files that must not enter the Docker image:
+#   - Secrets and credentials
+#   - Documentation and diagrams
+#   - Development tooling
+#   - Python and OS cache
+#
+# Files that MUST reach the image (copied explicitly in Dockerfile):
+#   main.py  live_session.py  gemini_handler.py
+#   vent_reasoning.py  case_memory.py  index.html
+#   requirements.txt
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Secrets — surgical patterns, never broad *.json ──────────────────────────
+# *.json was intentionally NOT used — it would block legitimate config files.
+# These patterns target credential file naming conventions specifically.
+*service-account*.json
+*credentials*.json
+*-key.json
+*_key.json
+serviceAccountKey.json
+.env
+.env.*
+!.env.example
+
+# ── Version control ───────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Python cache ──────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+venv/
+env/
+.venv/
+ENV/
+
+# ── Documentation and diagrams ────────────────────────────────────────────────
+# These are repo assets — not needed at runtime inside the container.
+*.md
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.pdf
+architecture.html
+VentLive_*.html
+ARCHITECTURE.md
+
+# ── Development and deployment tooling ───────────────────────────────────────
+# deploy.sh runs outside Docker — not needed inside the image.
+deploy.sh
+.env.example
+Dockerfile
+.dockerignore
+
+# ── IDE and editor ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# ── OS artifacts ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+ventlive.log
+logs/
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+.coverage
+htmlcov/
