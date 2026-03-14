@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VentLive AI — System Architecture</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;background:#ffffff;padding:20px;max-width:960px;margin:0 auto}
+h1{font-size:17px;font-weight:700;margin-bottom:4px}
+h2{font-size:11px;color:#888;margin-bottom:16px;font-weight:400}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:20px;border:1px solid #ccc;background:#f5f5f3;cursor:pointer;font-size:12px;font-weight:500;color:#555;transition:all .15s}
+.tab.active{background:#fff;color:#1a1a1a;border-color:#888}
+.panel{display:none}.panel.active{display:block}
+.layer{margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid #ddd}
+.layer-header{padding:8px 14px;font-weight:700;font-size:12px}
+.layer-body{padding:10px 12px;background:#f9f9f7}
+.boxes{display:flex;gap:8px;flex-wrap:wrap}
+.box{flex:1;min-width:140px;border-radius:8px;padding:9px 11px;border:1.5px solid #ddd;background:#fff}
+.box .label{font-weight:700;font-size:12px;margin-bottom:3px}
+.box .sub{font-size:11px;color:#555;line-height:1.45}
+.arrow{text-align:center;color:#aaa;font-size:18px;margin:3px 0;line-height:1}
+.arrow-label{font-size:10px;color:#aaa;text-align:center;margin-top:-2px;margin-bottom:3px}
+.two-col{display:flex;gap:10px}
+.two-col>.layer{flex:1}
+.step{display:flex;gap:10px;align-items:flex-start;padding:7px 10px;border-radius:8px;margin-bottom:5px;background:#f9f9f7;border:1px solid #e8e8e5}
+.step-num{min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.step-content .title{font-weight:700;font-size:12px}
+.step-content .desc{font-size:11px;color:#555;margin-top:2px;line-height:1.4}
+.cols{display:flex;gap:12px}
+.cols>.col{flex:1}
+.flow-box{border-radius:8px;padding:8px 10px;border:1.5px solid #ddd;background:#fff;margin-bottom:6px}
+.flow-box .label{font-weight:700;font-size:12px;margin-bottom:2px}
+.flow-box .sub{font-size:11px;color:#555;line-height:1.4}
+.flow-row-2{display:flex;gap:8px;margin-bottom:6px}
+.flow-row-2>.flow-box{margin-bottom:0;flex:1}
+.deg-row{display:flex;gap:8px;margin-bottom:8px;align-items:stretch}
+.deg-trigger{min-width:170px;max-width:190px;padding:8px 10px;border-radius:8px;font-size:11px;font-weight:700;display:flex;align-items:center}
+.deg-arrow{display:flex;align-items:center;color:#aaa;font-size:14px;padding:0 4px;flex-shrink:0}
+.deg-result{flex:1;padding:8px 10px;border-radius:8px;background:#f9f9f7;font-size:11px;color:#444;line-height:1.5;border:1px solid #e8e8e5}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;margin:1px 2px}
+.section-note{font-size:11px;color:#888;margin-bottom:10px}
+
+.purple-bg{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC}
+.teal-bg{background:#E1F5EE;color:#085041;border-color:#5DCAA5}
+.blue-bg{background:#E6F1FB;color:#0C447C;border-color:#85B7EB}
+.amber-bg{background:#FAEEDA;color:#633806;border-color:#EF9F27}
+.coral-bg{background:#FAECE7;color:#712B13;border-color:#F0997B}
+.green-bg{background:#EAF3DE;color:#27500A;border-color:#97C459}
+.gray-bg{background:#F1EFE8;color:#444441;border-color:#B4B2A9}
+.red-bg{background:#FCEBEB;color:#791F1F;border-color:#F09595}
+</style>
+</head>
+<body>
+
+<h1>VentLive AI — System Architecture</h1>
+<h2>Google Gemini Live Agent Challenge · ICU Ventilation Clinical Decision Support</h2>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('overview',this)">System overview</div>
+  <div class="tab" onclick="show('pipeline',this)">Clinical pipeline</div>
+  <div class="tab" onclick="show('voice',this)">Voice data flow</div>
+  <div class="tab" onclick="show('degradation',this)">Graceful degradation</div>
+</div>
+
+<!-- TAB 1: SYSTEM OVERVIEW -->
+<div id="overview" class="panel active">
+
+  <div class="layer">
+    <div class="layer-header purple-bg">Doctor — ICU bedside</div>
+    <div class="layer-body"><div class="boxes">
+      <div class="box" style="border-color:#AFA9EC"><div class="label">🎤 Voice input</div><div class="sub">PCM 16kHz via AudioWorklet · natural speech · interruptible mid-sentence</div></div>
+      <div class="box" style="border-color:#AFA9EC"><div class="label">⌨️ Text input</div><div class="sub">Typed in noisy environments · seamlessly merged with voice pipeline</div></div>
+    </div></div>
+  </div>
+
+  <div class="arrow">↓</div>
+  <div class="arrow-label">WebSocket /ws/live/{case_id} + REST API</div>
+
+  <div class="layer">
+    <div class="layer-header teal-bg">Frontend — index.html (Browser SPA)</div>
+    <div class="layer-body"><div class="boxes">
+      <div class="box" style="border-color:#5DCAA5"><div class="label">Sidebar</div><div class="sub">Patient list · new case form · pagination · baseline PaCO₂</div></div>
+      <div class="box" style="border-color:#5DCAA5"><div class="label">Chat area</div><div class="sub">Doctor bubbles · AI transcripts · SCCM cards · trend badges · stale warnings</div></div>
+      <div class="box" style="border-color:#5DCAA5"><div class="label">Input controls</div><div class="sub">AudioWorklet 16kHz · voice/mute/end · text textarea · end-pill waveform</div></div>
+      <div class="box" style="border-color:#5DCAA5"><div class="label">Audio pipeline</div><div class="sub">Mic→PCM→base64→WS · WS→PCM 24kHz→speaker</div></div>
+    </div></div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="layer">
+    <div class="layer-header blue-bg">Backend — main.py (FastAPI + Uvicorn · Google Cloud Run)</div>
+    <div class="layer-body"><div class="boxes">
+      <div class="box" style="border-color:#85B7EB"><div class="label">REST endpoints</div><div class="sub">POST /cases/new · GET /cases · POST /analyze · POST /baseline_paco2 · GET /health · GET /logs</div></div>
+      <div class="box" style="border-color:#85B7EB"><div class="label">WebSocket handler</div><div class="sub">browser_reader()→msg_queue→sender()+receiver() · session reconnect loop · exponential backoff 2s→30s</div></div>
+      <div class="box" style="border-color:#85B7EB"><div class="label">Middleware</div><div class="sub">CORS · ngrok_bypass · security headers · CSP · keepalive ping 20s · log ring buffer 200 entries</div></div>
+    </div></div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="layer">
+    <div class="layer-header amber-bg">Pipeline orchestrator — live_session.py</div>
+    <div class="layer-body"><div class="boxes">
+      <div class="box" style="border-color:#EF9F27"><div class="label">_run_clinical_pipeline()</div><div class="sub">13-step sequential pipeline: clean → extract → classify → carry-forward → update memory → trend → reason → store</div></div>
+      <div class="box" style="border-color:#EF9F27"><div class="label">_build_verbal_script()</div><div class="sub">SCCM dict → natural spoken sentence → inject_speech()</div></div>
+      <div class="box" style="border-color:#EF9F27"><div class="label">Session lifecycle</div><div class="sub">build_live_config() · auto-reconnect · pending_speech_inject[] replay on reconnect</div></div>
+    </div></div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="two-col">
+    <div class="layer">
+      <div class="layer-header coral-bg">gemini_handler.py — NLU extraction</div>
+      <div class="layer-body" style="display:flex;flex-direction:column;gap:6px">
+        <div class="box" style="border-color:#F0997B"><div class="label">Gemini 2.5 Flash API</div><div class="sub">Structured JSON extraction · 3 retries · 20s timeout · 1s→2s→4s backoff · returns None on failure</div></div>
+        <div class="box" style="border-color:#F0997B"><div class="label">22 regex fallbacks</div><div class="sub">mode · TV · PEEP · FiO₂ · RR · Pplat · pH · PaCO₂ · PaO₂ · SpO₂ · BP · HR · MAP · GCS · SBT · cough · vaso · prior_paco2</div></div>
+        <div class="box" style="border-color:#F0997B"><div class="label">classify_input()</div><div class="sub">"data" → full pipeline · "question" → QA early return grounded on latest SCCM card</div></div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-header green-bg">vent_reasoning.py — SCCM engine</div>
+      <div class="layer-body" style="display:flex;flex-direction:column;gap:6px">
+        <div class="box" style="border-color:#97C459"><div class="label">Calculators</div><div class="sub">IBW (Devine) · ΔP (Pplat−PEEP) · P/F · S/F (Rice 2007) · RSBI · MAP · TV/kg · ARDSNet PEEP tables (lower + higher)</div></div>
+        <div class="box" style="border-color:#97C459"><div class="label">5 diagnostic branches</div><div class="sub">Branch 0: COPD+ARDS overlap · Branch 1: ARDS/hypoxemic · Branch 2: COPD/hypercapnic (4 sub-branches) · Branch 3: Weaning/SBT · Branch 4: Unknown</div></div>
+        <div class="box" style="border-color:#97C459"><div class="label">Output: 12-field SCCM dict</div><div class="sub">ventilation_status · interpretation · next_step · monitoring · escalation · ΔP · P/F · RSBI · TV/kg · MAP · trend_summary</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="layer">
+    <div class="layer-header gray-bg">case_memory.py — Persistence layer</div>
+    <div class="layer-body"><div class="boxes">
+      <div class="box" style="border-color:#B4B2A9"><div class="label">Firestore (primary)</div><div class="sub">Collection: vent_cases · ArrayUnion time-series · UUID4 per patient · service account auth</div></div>
+      <div class="box" style="border-color:#B4B2A9"><div class="label">In-memory dict _mem</div><div class="sub">Write-through cache · updated first · _pending_sync[] retry queue · _patch_mem on reload · ~30s max loss window</div></div>
+      <div class="box" style="border-color:#B4B2A9"><div class="label">get_trend()</div><div class="sub">PaO₂ ±5mmHg · pH ±0.02 · MAP ±5mmHg · PEEP direction tracking</div></div>
+    </div></div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="two-col">
+    <div class="layer">
+      <div class="layer-header gray-bg">Google Cloud Firestore</div>
+      <div class="layer-body"><div class="sub" style="font-size:11px">Project: ventlive-ai · SDK: google-cloud-firestore · Region: configurable · Graceful degradation: in-memory fallback if unavailable</div></div>
+    </div>
+    <div class="layer">
+      <div class="layer-header amber-bg">Vertex AI — Gemini models</div>
+      <div class="layer-body"><div class="sub" style="font-size:11px"><strong>Gemini 2.5 Flash Live</strong> — bidirectional audio · Puck voice (en-US) · server-side VAD · barge-in · start/end sensitivity HIGH · silence 2000ms · region: us-east4<br><br><strong>Gemini 2.5 Flash</strong> — text gen temp=0.15 · structured JSON · clinical NLU · 3 retries · 20s timeout · backoff 1s→2s→4s</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 2: PIPELINE -->
+<div id="pipeline" class="panel">
+  <div class="section-note">13-step sequential pipeline inside live_session._run_clinical_pipeline()</div>
+  <div class="cols">
+    <div class="col">
+      <div class="step"><div class="step-num blue-bg">1</div><div class="step-content"><div class="title">Clean input</div><div class="desc">Arabic→English map (80+ terms) · Latin transliteration (20+ patterns) · noise tag removal · Unicode strip</div></div></div>
+      <div class="step"><div class="step-num coral-bg">2</div><div class="step-content"><div class="title">gemini_handler.process_text_input()</div><div class="desc">Gemini 2.5 Flash → narrative + safety_flags + extracted dict · 22 regex fallbacks always run after</div></div></div>
+      <div class="step" style="border-color:#EF9F27"><div class="step-num amber-bg">2b</div><div class="step-content"><div class="title">classify_input() — branch point</div><div class="desc">"question" → QA injection grounded on SCCM card → EARLY RETURN · "data" → continue pipeline</div></div></div>
+      <div class="step"><div class="step-num blue-bg">3</div><div class="step-content"><div class="title">Inject baseline PaCO₂</div><div class="desc">COPD patients — stored baseline injected to protect against rapid-correction errors</div></div></div>
+      <div class="step"><div class="step-num blue-bg">4</div><div class="step-content"><div class="title">Carry-forward vent settings</div><div class="desc">Staleness ≤4h — avoids overwriting valid settings on partial data reports</div></div></div>
+      <div class="step"><div class="step-num red-bg">5</div><div class="step-content"><div class="title">Carry-forward ABG (staleness-gated)</div><div class="desc">Post-vent-change: 30min · Critical/Worsening: 120min · Stable: 480min · SpO₂ desaturation guard</div></div></div>
+      <div class="step"><div class="step-num green-bg">6</div><div class="step-content"><div class="title">update_vent_settings() → case_memory</div><div class="desc">New vent settings written to memory + Firestore with timestamp</div></div></div>
+    </div>
+    <div class="col">
+      <div class="step"><div class="step-num green-bg">7</div><div class="step-content"><div class="title">update_abg() → case_memory</div><div class="desc">ABG values stored; staleness clock resets</div></div></div>
+      <div class="step"><div class="step-num green-bg">8</div><div class="step-content"><div class="title">update_hemodynamics() → case_memory</div><div class="desc">BP · HR · MAP written to hemodynamics time-series array</div></div></div>
+      <div class="step"><div class="step-num blue-bg">9</div><div class="step-content"><div class="title">get_trend()</div><div class="desc">PaO₂ · pH · MAP · PEEP direction tracked vs previous values with delta thresholds</div></div></div>
+      <div class="step"><div class="step-num blue-bg">10</div><div class="step-content"><div class="title">Inject prior PaCO₂ for COPD delta check</div><div class="desc">Guards rapid PaCO₂ correction (&gt;20mmHg or &gt;50%/24h) — prevents cerebral vasodilation risk</div></div></div>
+      <div class="step"><div class="step-num green-bg">11</div><div class="step-content"><div class="title">vent_reasoning.generate_sccm_recommendation()</div><div class="desc">Routes to correct branch → runs calculators → returns 12-field SCCM dict</div></div></div>
+      <div class="step"><div class="step-num gray-bg">12</div><div class="step-content"><div class="title">add_event() → case_memory</div><div class="desc">Clinical event logged with timestamp for audit trail</div></div></div>
+      <div class="step"><div class="step-num gray-bg">13</div><div class="step-content"><div class="title">add_ai_assessment() → case_memory + Firestore</div><div class="desc">Full SCCM recommendation + verbal_script stored · triggers card render + voice playback on frontend</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: VOICE FLOW -->
+<div id="voice" class="panel">
+  <div class="section-note">Complete voice interaction data flow — from microphone to speaker</div>
+
+  <div class="flow-box" style="border-color:#AFA9EC"><div class="label">🎤 Doctor speaks naturally at ICU bedside</div></div>
+  <div class="arrow">↓</div>
+  <div class="flow-box" style="border-color:#5DCAA5"><div class="label">AudioWorklet → base64 → WebSocket → sender()</div><div class="sub">PCM 16kHz · 100ms / 3200 bytes chunks · send_realtime_input(media=Blob audio/pcm;rate=16000)</div></div>
+  <div class="arrow">↓</div>
+  <div class="flow-box" style="border-color:#EF9F27"><div class="label">Gemini 2.5 Flash Live — VAD + transcription</div><div class="sub">Detects speech end: 2s silence · 500ms prefix padding · start/end sensitivity HIGH · transcribes → input_transcription.text · fires turn_complete</div></div>
+  <div class="arrow">↓</div>
+  <div class="flow-box" style="border-color:#85B7EB"><div class="label">main.py receiver() — filtering + task dispatch</div><div class="sub">Accumulates doctor_transcript_buffer · readback detection (_is_injection_readback) · noise filter &lt;10 chars / punctuation-only dropped · asyncio.create_task(run_sccm_analysis())</div></div>
+  <div class="arrow">↓</div>
+  <div class="flow-box" style="border-color:#EF9F27"><div class="label">live_session._run_clinical_pipeline() — all 13 steps</div><div class="sub">Clean → extract (Gemini 2.5 Flash + 22 regex) → classify → carry-forward → update memory → trend → vent_reasoning → store to Firestore</div></div>
+  <div class="arrow">↓</div>
+  <div class="flow-box" style="border-color:#97C459"><div class="label">_build_verbal_script(rec) → inject_speech()</div><div class="sub">"Worsening. Driving pressure is 18 centimetres of water, above the 15 centimetre limit. Reduce tidal volume now." → session.send(end_of_turn=True) → Gemini Live reads in Puck voice → PCM 24kHz → WebSocket → AudioContext 24kHz → speaker</div></div>
+  <div class="arrow">↓</div>
+  <div class="flow-row-2">
+    <div class="flow-box" style="border-color:#5DCAA5"><div class="label">SCCM card renders on frontend</div><div class="sub">Color-coded status · trend badges (PaO₂/pH/MAP) · numbered next steps · safety flag box · guideline citations · staleness warnings</div></div>
+    <div class="flow-box" style="border-color:#F09595"><div class="label">⚡ Doctor interrupts mid-sentence</div><div class="sub">Gemini Live VAD detects overlapping speech · server_content.interrupted=True · softStopPlayback() · audioGeneration++ · all queued PCM buffers invalidated instantly · new doctor turn begins</div></div>
+  </div>
+</div>
+
+<!-- TAB 4: DEGRADATION -->
+<div id="degradation" class="panel">
+  <div class="section-note">Every failure mode has an automatic fallback — the clinical engine never goes dark at the bedside</div>
+
+  <div class="deg-row">
+    <div class="deg-trigger red-bg">Firestore unavailable</div>
+    <div class="deg-arrow">→</div>
+    <div class="deg-result">In-memory dict (<em>_mem</em>) serves all reads and writes. <em>_pending_sync[]</em> queues failed writes. <em>_patch_mem</em> reloads data on next access if process crashes. Maximum data loss window: ~30 seconds.</div>
+  </div>
+
+  <div class="deg-row">
+    <div class="deg-trigger red-bg">Gemini Flash fails (3 retries)</div>
+    <div class="deg-arrow">→</div>
+    <div class="deg-result">Backoff: 1s → 2s → 4s. After all retries: 22 regex fallbacks extract all 18 clinical fields (mode, TV, PEEP, FiO₂, RR, Pplat, pH, PaCO₂, PaO₂, SpO₂, BP, HR, MAP, GCS, SBT, cough, vaso, prior_paco2). Full SCCM reasoning runs. Doctor sees warning banner — not silence.</div>
+  </div>
+
+  <div class="deg-row">
+    <div class="deg-trigger red-bg">Gemini Live closes (1000/1011)</div>
+    <div class="deg-arrow">→</div>
+    <div class="deg-result">Auto-reconnect loop fires (invisible to browser WebSocket). Exponential backoff: 2s→4s→8s→16s→30s cap. No hard attempt limit — never gives up. <em>pending_speech_inject[]</em> replayed on successful reconnect.</div>
+  </div>
+
+  <div class="deg-row">
+    <div class="deg-trigger red-bg">WebSocket offline</div>
+    <div class="deg-arrow">→</div>
+    <div class="deg-result">REST /analyze fallback (POST with full pipeline). 10-second fallback timer activates on turn_complete. Doctor loses real-time voice but retains full SCCM reasoning and card output.</div>
+  </div>
+
+  <div class="deg-row">
+    <div class="deg-trigger amber-bg">Arabic speech / accent</div>
+    <div class="deg-arrow">→</div>
+    <div class="deg-result">Bilingual normalization layer: Arabic phonetic medical term map (80+ terms covering ICU parameters, modes, number words) + Latin transliteration map (20+ patterns: "peap"→PEEP, "plato"→plateau, "beep"→PEEP). Runs before any extraction, regardless of model version. Produces a bilingual ICU voice agent working in Arabic and English simultaneously.</div>
+  </div>
+</div>
+
+<script>
+function show(id, tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  tab.classList.add('active');
+}
+</script>
+</body>
+</html>
