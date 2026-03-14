@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VentLive AI — Gemini Live</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: #070d1a; color: #dde4f0;
+  height: 100vh; height: calc(var(--vh, 1vh) * 100);
+  display: flex; overflow: hidden; font-size: 14px;
+}
+#sidebar {
+  width: 280px; min-width: 280px; background: #0d1424;
+  border-right: 1px solid #1a2d4a; display: flex; flex-direction: column;
+  padding: 16px; gap: 14px; position: fixed; top: 0; left: 0;
+  height: 100vh;
+  height: 100dvh;
+  height: calc(var(--vh, 1vh) * 100);
+  z-index: 1000;
+  transform: translateX(-100%); transition: transform 0.3s ease; overflow-y: auto;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+#sidebar.open { transform: translateX(0); }
+#main.sidebar-open { margin-left: 280px; transition: margin-left 0.3s ease; }
+#sidebar-overlay {
+  display: none; position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh; height: calc(var(--vh, 1vh) * 100); background: rgba(0,0,0,0.5); z-index: 999;
+}
+#sidebar-overlay.open { display: block; }
+#hamburger {
+  background: transparent; border: none; color: #5ba3f5;
+  font-size: 22px; cursor: pointer; padding: 4px 8px; border-radius: 6px;
+}
+#hamburger:hover { background: #1a2d4a; }
+.sidebar-logo { font-size: 16px; font-weight: 800; color: #5ba3f5; padding-bottom: 8px; border-bottom: 1px solid #1a2d4a; display:flex; align-items:center; justify-content:space-between; width:100%; }
+.live-badge {
+  font-size: 9px; color: #4ade80; background: #0c1f10;
+  border: 1px solid #16a34a; border-radius: 3px; padding: 1px 6px;
+  margin-left: 6px; animation: live-pulse 2s ease-in-out infinite;
+}
+@keyframes live-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #4a7ab5; font-weight: 700; }
+.new-patient-form { display: flex; flex-direction: column; gap: 7px; }
+.form-row { display: flex; gap: 6px; }
+.form-input {
+  padding: 8px 10px; background: #111d30; border: 1px solid #1e3354;
+  border-radius: 8px; color: #dde4f0; font-size: 13px; width: 100%;
+}
+.form-input:focus { outline: none; border-color: #2563eb; }
+.form-input::placeholder { color: #3a5070; }
+.form-input-small { flex:1; padding: 7px 8px; background: #111d30; border: 1px solid #1e3354; border-radius: 8px; color: #dde4f0; font-size: 12px; }
+.btn-primary {
+  padding: 9px; background: #1d4ed8; color: #fff; border: none;
+  border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%;
+}
+.btn-primary:hover { background: #2563eb; }
+#patient-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; min-height: 0; }
+.patient-card {
+  position: relative; display: flex; align-items: flex-start; gap: 4px;
+  background: #111d30; border-radius: 9px; border: 2px solid transparent;
+  padding: 10px 8px 10px 12px;
+}
+.patient-card:hover  { border-color: #1e3354; }
+.patient-card.active { border-color: #2563eb; background: #0f1f3d; }
+.patient-card-body { flex: 1; cursor: pointer; min-width: 0; }
+.patient-diagnosis { font-size: 13px; font-weight: 700; color: #dde4f0; }
+.patient-id        { font-size: 10px; color: #3a5070; margin-top: 2px; }
+.patient-meta      { font-size: 10px; color: #3d8b4a; margin-top: 4px; display: flex; gap: 8px; }
+.patient-ibw       { color: #5ba3f5; }
+.patient-menu-wrapper { position: relative; flex-shrink: 0; }
+.three-dot-btn {
+  background: transparent; border: none; color: #3a5070;
+  font-size: 16px; font-weight: 900; cursor: pointer; padding: 2px 6px; border-radius: 6px;
+}
+.three-dot-btn:hover { background: #1a2d4a; color: #5ba3f5; }
+.dropdown-menu {
+  display: none; position: absolute; right: 0; top: 30px;
+  background: #0d1d35; border: 1px solid #1e3354; border-radius: 8px;
+  min-width: 140px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 999; overflow: hidden;
+}
+.dropdown-menu.open { display: block; }
+.dropdown-item { padding: 10px 14px; font-size: 13px; cursor: pointer; }
+.dropdown-item:hover { background: #1a2d4a; }
+.delete-item { color: #ef4444; }
+.delete-item:hover { background: #2d0f0f; color: #fca5a5; }
+#main {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  height: 100vh; height: calc(var(--vh, 1vh) * 100);
+  min-width: 0;
+}
+#header {
+  padding: 12px 22px; background: #0d1424; border-bottom: 1px solid #1a2d4a;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 56px;
+}
+#header-title  { font-size: 15px; font-weight: 700; color: #5ba3f5; white-space: nowrap; }
+#header-patient {
+  font-size: 12px; color: #8fa8c8; background: #111d30; padding: 5px 12px;
+  border-radius: 6px; flex: 1; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#connection-status {
+  font-size: 11px; padding: 5px 12px; border-radius: 6px; white-space: nowrap;
+  background: #111d30; border: 1px solid #1e3354; color: #3a5070;
+}
+#connection-status.connected { background: #0c1f10; border-color: #16a34a; color: #4ade80; }
+#connection-status.connecting { background: #1a1505; border-color: #ca8a04; color: #fbbf24; }
+#chat {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
+}
+#empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1; text-align: center; gap: 8px; color: #1e3354;
+}
+.msg { max-width: 880px; border-radius: 12px; padding: 13px 17px; line-height: 1.6; }
+.msg-doctor      { background: #0f2245; align-self: flex-end; border-bottom-right-radius: 4px; color: #c8d8f0; }
+.msg-voice       { background: #0f2245; align-self: flex-end; border-left: 3px solid #4ade80; border-bottom-right-radius: 4px; color: #c8d8f0; }
+.msg-ai          { background: #0a1628; border: 1px solid #1a2d4a; align-self: flex-start; border-bottom-left-radius: 4px; width: 100%; max-width: 880px; }
+.msg-live-ai     { background: #0a1628; border: 1px solid #1a2d4a; border-left: 3px solid #5ba3f5; align-self: flex-start; width: 100%; max-width: 880px; color: #a0b8d8; font-style: italic; padding: 10px 14px; border-radius: 8px; }
+.ai-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; color: #4a7ab5; margin-bottom: 4px; }
+.ai-section { margin-top: 12px; }
+.status-stable    { color: #22c55e; font-weight: 700; font-size: 15px; }
+.status-worsening { color: #f59e0b; font-weight: 700; font-size: 15px; }
+.status-critical  { color: #ef4444; font-weight: 700; font-size: 15px; }
+.safety-flag-box {
+  background: #2d0f0f; border: 1px solid #7f1d1d; border-radius: 8px;
+  padding: 10px 14px; margin-top: 10px; color: #fca5a5; font-size: 13px;
+}
+.narrative-box {
+  background: #0d1d35; border-left: 3px solid #2563eb; padding: 10px 14px;
+  border-radius: 0 8px 8px 0; color: #a0b8d8; font-size: 13px; font-style: italic;
+}
+.next-step-box {
+  background: #0c1f10; border-left: 3px solid #16a34a; padding: 10px 14px;
+  border-radius: 0 8px 8px 0; color: #d1fae5; font-size: 13px;
+}
+.monitoring-box { color: #94a3b8; font-size: 13px; padding: 8px 0; border-top: 1px solid #1a2d4a; }
+.escalation-box { color: #fbbf24; font-size: 12px; padding: 8px 0; border-top: 1px solid #1a2d4a; }
+.metrics-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #1a2d4a; }
+.metric-card { background: #111d30; border-radius: 8px; padding: 8px 14px; text-align: center; min-width: 100px; }
+.metric-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #4a7ab5; }
+.metric-value { font-size: 17px; font-weight: 700; color: #4a7ab5; margin-top: 2px; }
+.metric-value.danger  { color: #ef4444; }
+.metric-value.warning { color: #f59e0b; }
+.metric-value.ok      { color: #22c55e; }
+.metric-note { font-size: 9px; color: #3a5070; margin-top: 2px; }
+.trend-badge {
+  font-size: 11px; color: #5ba3f5; background: #0d1d35; border: 1px solid #1e3354;
+  border-radius: 6px; padding: 4px 10px; margin-top: 8px; display: inline-block;
+}
+.stale-warning {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+    padding: 8px 12px;
+    margin: 6px 0;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+#input-area {
+  padding: 14px 22px; background: #0d1424; border-top: 1px solid #1a2d4a;
+  display: none; flex-direction: column; gap: 8px;
+}
+#input-row { display: flex; gap: 8px; align-items: flex-end; }
+#input-row button { transition: opacity 0.25s ease, transform 0.25s ease; }
+#text-input {
+  flex: 1; padding: 10px 15px; background: #111d30; border: 1px solid #1e3354;
+  border-radius: 12px; color: #dde4f0; font-size: 14px; resize: none;
+  min-height: 46px; max-height: 120px; font-family: inherit; line-height: 1.5;
+}
+#text-input:focus { outline: none; border-color: #2563eb; }
+#text-input::placeholder { color: #3a5070; }
+.btn-send {
+  padding: 10px 20px; background: #1d4ed8; color: #fff; border: none;
+  border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; height: 46px;
+}
+.btn-send:hover { background: #2563eb; }
+/* ── Voice Button (idle) — white circle with 4 static bars ── */
+.btn-voice {
+  width: 46px; height: 46px; border-radius: 50%; border: none;
+  background: #ffffff; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(255,255,255,0.15);
+}
+.btn-voice:hover { transform: scale(1.07); box-shadow: 0 3px 12px rgba(255,255,255,0.25); }
+.btn-voice svg { display: block; }
+
+/* ── Mute Button (active state) — gray circle, red when muted ── */
+.btn-mute {
+  width: 46px; height: 46px; border-radius: 50%; border: none;
+  background: #2a2a2a; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s ease;
+}
+.btn-mute.muted { background: #5c1a1a; }
+.btn-mute svg { display: block; }
+
+/* ── End Pill (active state) — blue rounded rectangle ── */
+.btn-end-pill {
+  height: 46px; padding: 0 18px; border-radius: 23px; border: none;
+  background: #1d4ed8; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  color: #fff; font-size: 15px; font-weight: 600;
+  transition: background 0.2s ease;
+}
+.btn-end-pill:hover { background: #2563eb; }
+
+/* Animated bars inside End pill */
+.end-bars {
+  display: flex; align-items: center; gap: 2px; height: 20px;
+}
+.end-bar {
+  width: 3px; border-radius: 2px; background: #fff;
+  height: 4px; transition: height 0.05s ease;
+}
+.btn-circle {
+  width: 46px; height: 46px; border-radius: 50%; cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all 0.2s ease;
+  background: #1a2535; border: 2px solid #3d6b8a; color: #7aafc4;
+}
+.btn-circle:hover { background: #1f3045; border-color: #5a9abf; color: #a0cde0; }
+.btn-circle.muted { background: #0f1a25; border-color: #2a4a5e; color: #4a7a94;
+  animation: mute-dim 2s ease-in-out infinite; }
+@keyframes mute-dim {
+  0%,100% { opacity:1; } 50% { opacity:0.5; }
+}
+.btn-end {
+  background: #251a2e; border-color: #6b3d7a; color: #b07cc4;
+}
+.btn-end:hover { background: #2f1f3a; border-color: #8a50a0; color: #c89ee0; }
+#status-bar {
+  font-size: 11px; color: #3a5070; text-align: center;
+  min-height: 18px; font-style: italic;
+  padding: 4px 12px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  background: #070d1a;
+  border-top: 1px solid #0f1e30;
+  flex-shrink: 0;
+  display: block !important;
+  width: 100%;
+}
+#stop-btn {
+  display: none; padding: 8px 18px; background: #7f1d1d; border: 1px solid #ef4444;
+  border-radius: 8px; color: #fca5a5; cursor: pointer; font-size: 13px; font-weight: 700;
+}
+#voice-indicator {
+  display: none; align-items: center; gap: 4px; padding: 4px 10px;
+  background: #0c1f10; border: 1px solid #16a34a; border-radius: 20px;
+  font-size: 11px; color: #4ade80;
+}
+.voice-bar { width:3px; border-radius:2px; background:#4ade80; animation:voice-wave 0.8s ease-in-out infinite; }
+.voice-bar:nth-child(1) { height:6px;  animation-delay:0s;    }
+.voice-bar:nth-child(2) { height:12px; animation-delay:0.15s; }
+.voice-bar:nth-child(3) { height:8px;  animation-delay:0.3s;  }
+.voice-bar:nth-child(4) { height:14px; animation-delay:0.1s;  }
+.voice-bar:nth-child(5) { height:6px;  animation-delay:0.25s; }
+@keyframes voice-wave {
+  0%,100% { transform:scaleY(0.4); opacity:0.6; }
+  50%      { transform:scaleY(1);   opacity:1;   }
+}
+/* ── Responsive Breakpoints ────────────────────────────── */
+
+/* Tablet landscape + small laptop: 768px–1023px */
+@media (max-width: 1023px) {
+  #main.sidebar-open { margin-left: 0 !important; }
+}
+
+/* Tablet portrait + large phone: 600px–767px */
+@media (max-width: 767px) {
+  #main { width: 100vw; }
+  #main.sidebar-open { margin-left: 0 !important; }
+  #chat { padding: 12px 10px; gap: 10px; }
+  .msg { max-width: 100% !important; font-size: 13px; padding: 10px 12px; }
+  .msg-ai { max-width: 100% !important; }
+  .msg-live-ai { max-width: 100% !important; }
+  #header { padding: 8px 12px; min-height: 48px; flex-wrap: wrap; gap: 6px; }
+  #header-title { font-size: 14px; }
+  #header-patient { max-width: 160px; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #connection-status { font-size: 10px; padding: 3px 7px; }
+  #input-area { padding: 8px 10px; }
+  #input-row { flex-wrap: wrap; gap: 6px; }
+  #text-input { font-size: 13px; min-height: 38px; width: 100%; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .sccm-grid { grid-template-columns: 1fr !important; }
+  .sccm-card { padding: 12px; }
+  .narrative-box { font-size: 13px; padding: 10px 12px; }
+}
+
+/* Large phone: 480px–599px */
+@media (max-width: 599px) {
+  #header { gap: 4px; }
+  #header-title { font-size: 13px; }
+  #header-patient { max-width: 120px; font-size: 10px; }
+  .msg { font-size: 12px; padding: 9px 11px; }
+  #chat { padding: 10px 8px; gap: 8px; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  #input-row { gap: 5px; }{}
+  .btn-end-pill { padding: 0 12px; font-size: 12px; }
+}
+
+/* Small phone: <480px (iPhone SE, Galaxy A series) */
+@media (max-width: 479px) {
+  #header-title { font-size: 12px; }
+  #header-patient { display: none; }
+  .msg { font-size: 12px; padding: 8px 10px; }
+  #chat { padding: 8px 6px; gap: 7px; }
+  .metric-grid { grid-template-columns: 1fr !important; }
+  .sccm-card { padding: 10px; font-size: 12px; }
+  .narrative-box { font-size: 12px; padding: 8px 10px; }
+  #text-input { font-size: 12px; min-height: 36px; }
+  .btn-voice, .btn-mute { width: 40px; height: 40px; }
+  .btn-end-pill { height: 40px; padding: 0 10px; font-size: 11px; }
+}
+
+/* Very small phone: <360px (Galaxy A01, older Androids) */
+@media (max-width: 359px) {
+  #header { padding: 6px 8px; }
+  #header-title { font-size: 11px; }
+  .msg { font-size: 11px; padding: 7px 9px; }
+  #input-area { padding: 6px 8px; }
+  .btn-voice, .btn-mute { width: 36px; height: 36px; }
+  .btn-end-pill { height: 36px; padding: 0 8px; font-size: 11px; }
+}
+/* waveform removed — replaced by End pill animated bars */
+</style>
+</head>
+<body>
+
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div id="sidebar">
+  <div class="sidebar-logo"><svg width="20" height="18" viewBox="0 0 72 66" fill="none" style="display:inline-block;vertical-align:middle;margin-right:5px"><defs><radialGradient id="slg" cx="40%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e3a6e" stop-opacity="0.7"/><stop offset="100%" stop-color="#0a1628" stop-opacity="0"/></radialGradient><radialGradient id="srg" cx="60%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e3a6e" stop-opacity="0.7"/><stop offset="100%" stop-color="#0a1628" stop-opacity="0"/></radialGradient></defs><rect x="34" y="2" width="4" height="13" rx="2" fill="#0d3060" stroke="#4ade80" stroke-width="1.3"/><line x1="34" y1="6" x2="38" y2="6" stroke="#4ade80" stroke-width="0.9" opacity="0.6"/><line x1="34" y1="10" x2="38" y2="10" stroke="#4ade80" stroke-width="0.9" opacity="0.6"/><path d="M34 15 Q30 16 27 19" stroke="#4ade80" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M38 15 Q42 16 45 18" stroke="#4ade80" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M27 19 C25 19 21 20 18 23 C15 26 13 31 12 37 C11 44 12 52 15 58 C17 62 21 65 25 65 C28 65 30 62 31 59 C32 56 31 52 31 48 C32 43 31 38 31 33 C31 28 30 22 27 19 Z" stroke="#3b82f6" stroke-width="1.8" fill="url(#slg)"/><path d="M31 34 C34 38 34 44 32 49 C31 52 30 54 31 58" stroke="#2563eb" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M31 55 C33 54 34 56 32 59" stroke="#3b82f6" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M28 22 Q20 36 13 45" stroke="#2563eb" stroke-width="1" fill="none" stroke-dasharray="3,2.5" opacity="0.4"/><path d="M45 18 C47 18 52 19 55 22 C59 26 61 32 61 39 C61 47 59 55 56 60 C53 64 49 66 45 66 C42 66 40 63 39 60 C38 56 38 51 38 46 C38 40 39 33 40 27 C41 22 43 18 45 18 Z" stroke="#3b82f6" stroke-width="1.8" fill="url(#srg)"/><path d="M38 32 C36 37 35 44 36 50 C37 54 38 57 38 60" stroke="#2563eb" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M40 24 Q51 39 60 46" stroke="#2563eb" stroke-width="1" fill="none" stroke-dasharray="3,2.5" opacity="0.4"/><path d="M39 35 Q51 32 61 34" stroke="#2563eb" stroke-width="0.9" fill="none" stroke-dasharray="2,2.5" opacity="0.35"/><rect x="12" y="37" width="3" height="12" rx="1.5" fill="#2563eb"/><rect x="16.5" y="30" width="3" height="19" rx="1.5" fill="#3b82f6"/><rect x="21" y="24" width="3" height="25" rx="1.5" fill="#60a5fa"/><rect x="57" y="37" width="3" height="12" rx="1.5" fill="#2563eb"/><rect x="52.5" y="30" width="3" height="19" rx="1.5" fill="#3b82f6"/><rect x="48" y="24" width="3" height="25" rx="1.5" fill="#60a5fa"/></svg>VentLive AI
+    <button onclick="toggleSidebar()" aria-label="Close sidebar"
+      style="background:transparent;border:none;color:#5ba3f5;font-size:18px;
+             cursor:pointer;padding:2px 6px;border-radius:6px;margin-left:auto;
+             line-height:1;transition:background 0.2s"
+      onmouseover="this.style.background='#1a2d4a'"
+      onmouseout="this.style.background='transparent'">☰</button>
+  </div>
+  <div class="new-patient-form">
+    <div class="section-label">New Patient</div>
+    <input id="inp-name" class="form-input" placeholder="Patient name (optional)" aria-label="Patient name"
+           onkeydown="if(event.key==='Enter') createPatient()"/>
+    <select id="inp-diagnosis" class="form-input">
+        <option value="" disabled selected>Select Diagnosis</option>
+        <option value="ARDS">ARDS</option>
+        <option value="COPD">COPD</option>
+        <option value="COPD+ARDS">COPD + ARDS Overlap</option>
+        <option value="Weaning">Weaning / SBT</option>
+        <option value="Post-op Weaning">Post-op Weaning</option>
+    </select>
+    <div class="form-row">
+      <input id="inp-height" class="form-input-small" placeholder="Height cm" type="number" aria-label="Patient height in centimetres"/>
+      <select id="inp-sex" class="form-input-small">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+    </div>
+    <div style="font-size:10px;color:#3a5070">Height + sex → IBW → accurate TV targets</div>
+    <input id="inp-baseline-paco2" class="form-input"
+           placeholder="Baseline PaCO₂ mmHg (optional, COPD)"
+           type="number" min="30" max="120"
+           onkeydown="if(event.key==='Enter') createPatient()"/>
+    <div style="font-size:10px;color:#3a5070">Baseline PaCO₂ → prevents over-correction warning</div>
+    <button class="btn-primary" onclick="unlockAudio();createPatient()" aria-label="Create new patient">+ New Patient</button>
+    <details id="input-hint" style="margin-top:8px;font-size:11px;line-height:1.6;">
+      <summary style="cursor:pointer;color:#4a7ab5;user-select:none;list-style:none;display:flex;align-items:center;gap:5px;padding:4px 0;">
+        <span style="font-size:12px;">💡</span>
+        <span style="font-weight:600;letter-spacing:0.3px;">Typing tips</span>
+      </summary>
+      <div style="margin-top:6px;padding:8px 10px;background:#0d1424;border-radius:8px;border:1px solid #1a2d4a;max-height:200px;overflow-y:auto;">
+        <div style="margin-bottom:6px;">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:2px;">Vasopressors</div>
+          <div style="color:#6b7280;">"norepi 8 mcg"</div>
+          <div style="color:#6b7280;">"noradrenaline 0.1 mcg/kg/min"</div>
+          <div style="color:#6b7280;">"on vasopressor support"</div>
+        </div>
+        <div style="margin-bottom:6px;border-top:1px solid #1a2d4a;padding-top:6px;">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:2px;">Baseline CO₂ (COPD)</div>
+          <div style="color:#6b7280;">"baseline CO2 62"</div>
+          <div style="color:#6b7280;">"his CO2 runs at 65"</div>
+          <div style="color:#6b7280;">"usual CO2 around 60"</div>
+        </div>
+        <div style="margin-bottom:6px;border-top:1px solid #1a2d4a;padding-top:6px;">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:2px;">Prior CO₂</div>
+          <div style="color:#6b7280;">"prior CO2 82"</div>
+          <div style="color:#6b7280;">"CO2 on admission was 80"</div>
+          <div style="color:#6b7280;">"morning CO2 was 78"</div>
+        </div>
+        <div style="margin-bottom:6px;border-top:1px solid #1a2d4a;padding-top:6px;">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:2px;">SBT Status</div>
+          <div style="color:#6b7280;">"patient tolerated the trial"</div>
+          <div style="color:#6b7280;">"failed the trial"</div>
+          <div style="color:#6b7280;">"trial in progress"</div>
+        </div>
+        <div style="border-top:1px solid #1a2d4a;padding-top:6px;">
+          <div style="color:#60a5fa;font-weight:600;margin-bottom:2px;">Cough</div>
+          <div style="color:#6b7280;">"cough reflex intact"</div>
+          <div style="color:#6b7280;">"weak cough"</div>
+          <div style="color:#6b7280;">"cannot cough"</div>
+        </div>
+      </div>
+    </details>
+  </div>
+  <div style="border-top:1px solid #1a2d4a;padding-top:12px;display:flex;flex-direction:column;gap:8px;min-height:0;flex:1">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="section-label">Active Patients</div>
+    <button onclick="confirmDeleteAll()" title="Remove all patients" aria-label="Delete all patients"
+      style="background:none;border:1px solid #2a1a1a;color:#ef4444;font-size:10px;
+             padding:2px 7px;border-radius:4px;cursor:pointer;white-space:nowrap;
+             transition:background 0.2s"
+      onmouseover="this.style.background='#2a0a0a'"
+      onmouseout="this.style.background='none'">🗑 All</button>
+  </div>
+  <div id="patient-list"><div style="color:#1e3354;font-size:12px">No patients yet</div></div>
+</div>
+</div>
+
+<div id="main">
+  <div id="header">
+    <button id="hamburger" onclick="toggleSidebar()" aria-label="Toggle sidebar" aria-expanded="true">☰</button>
+    <div id="header-title">
+      <svg width="22" height="20" viewBox="0 0 72 66" fill="none" style="vertical-align:middle;margin-right:6px"><defs><radialGradient id="hlg" cx="40%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e3a6e" stop-opacity="0.7"/><stop offset="100%" stop-color="#0a1628" stop-opacity="0"/></radialGradient><radialGradient id="hrg" cx="60%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e3a6e" stop-opacity="0.7"/><stop offset="100%" stop-color="#0a1628" stop-opacity="0"/></radialGradient></defs><rect x="34" y="2" width="4" height="13" rx="2" fill="#0d3060" stroke="#4ade80" stroke-width="1.3"/><line x1="34" y1="6" x2="38" y2="6" stroke="#4ade80" stroke-width="0.9" opacity="0.6"/><line x1="34" y1="10" x2="38" y2="10" stroke="#4ade80" stroke-width="0.9" opacity="0.6"/><path d="M34 15 Q30 16 27 19" stroke="#4ade80" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M38 15 Q42 16 45 18" stroke="#4ade80" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M27 19 C25 19 21 20 18 23 C15 26 13 31 12 37 C11 44 12 52 15 58 C17 62 21 65 25 65 C28 65 30 62 31 59 C32 56 31 52 31 48 C32 43 31 38 31 33 C31 28 30 22 27 19 Z" stroke="#3b82f6" stroke-width="1.8" fill="url(#hlg)"/><path d="M31 34 C34 38 34 44 32 49 C31 52 30 54 31 58" stroke="#2563eb" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M31 55 C33 54 34 56 32 59" stroke="#3b82f6" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M28 22 Q20 36 13 45" stroke="#2563eb" stroke-width="1" fill="none" stroke-dasharray="3,2.5" opacity="0.4"/><path d="M45 18 C47 18 52 19 55 22 C59 26 61 32 61 39 C61 47 59 55 56 60 C53 64 49 66 45 66 C42 66 40 63 39 60 C38 56 38 51 38 46 C38 40 39 33 40 27 C41 22 43 18 45 18 Z" stroke="#3b82f6" stroke-width="1.8" fill="url(#hrg)"/><path d="M38 32 C36 37 35 44 36 50 C37 54 38 57 38 60" stroke="#2563eb" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M40 24 Q51 39 60 46" stroke="#2563eb" stroke-width="1" fill="none" stroke-dasharray="3,2.5" opacity="0.4"/><path d="M39 35 Q51 32 61 34" stroke="#2563eb" stroke-width="0.9" fill="none" stroke-dasharray="2,2.5" opacity="0.35"/><rect x="12" y="37" width="3" height="12" rx="1.5" fill="#2563eb"/><rect x="16.5" y="30" width="3" height="19" rx="1.5" fill="#3b82f6"/><rect x="21" y="24" width="3" height="25" rx="1.5" fill="#60a5fa"/><rect x="57" y="37" width="3" height="12" rx="1.5" fill="#2563eb"/><rect x="52.5" y="30" width="3" height="19" rx="1.5" fill="#3b82f6"/><rect x="48" y="24" width="3" height="25" rx="1.5" fill="#60a5fa"/></svg>VentLive AI</div>
+    <div id="header-patient">← Select a patient to begin</div>
+    <div id="connection-status">
+      <svg id="conn-dot" width="10" height="10" viewBox="0 0 10 10" style="vertical-align:middle;margin-right:4px">
+        <circle cx="5" cy="5" r="4" fill="#ef4444"/>
+      </svg><span id="conn-text">Disconnected</span>
+    </div>
+  </div>
+
+  <div id="chat" role="log" aria-live="polite" aria-label="Clinical AI assessment output">
+    <div id="empty-state">
+      <div style="margin-bottom:12px"><svg width="64" height="59" viewBox="0 0 72 66" fill="none"><defs><radialGradient id="elg" cx="40%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e3a6e" stop-opacity="0.7"/><stop offset="100%" stop-color="#0a1628" stop-opacity="0"/></radialGradient><radialGradient id="erg" cx="60%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e3a6e" stop-opacity="0.7"/><stop offset="100%" stop-color="#0a1628" stop-opacity="0"/></radialGradient></defs><rect x="34" y="2" width="4" height="13" rx="2" fill="#0d3060" stroke="#4ade80" stroke-width="1.3"/><line x1="34" y1="6" x2="38" y2="6" stroke="#4ade80" stroke-width="0.9" opacity="0.6"/><line x1="34" y1="10" x2="38" y2="10" stroke="#4ade80" stroke-width="0.9" opacity="0.6"/><path d="M34 15 Q30 16 27 19" stroke="#4ade80" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M38 15 Q42 16 45 18" stroke="#4ade80" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M27 19 C25 19 21 20 18 23 C15 26 13 31 12 37 C11 44 12 52 15 58 C17 62 21 65 25 65 C28 65 30 62 31 59 C32 56 31 52 31 48 C32 43 31 38 31 33 C31 28 30 22 27 19 Z" stroke="#3b82f6" stroke-width="1.8" fill="url(#elg)"/><path d="M31 34 C34 38 34 44 32 49 C31 52 30 54 31 58" stroke="#2563eb" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M31 55 C33 54 34 56 32 59" stroke="#3b82f6" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M28 22 Q20 36 13 45" stroke="#2563eb" stroke-width="1" fill="none" stroke-dasharray="3,2.5" opacity="0.4"/><path d="M45 18 C47 18 52 19 55 22 C59 26 61 32 61 39 C61 47 59 55 56 60 C53 64 49 66 45 66 C42 66 40 63 39 60 C38 56 38 51 38 46 C38 40 39 33 40 27 C41 22 43 18 45 18 Z" stroke="#3b82f6" stroke-width="1.8" fill="url(#erg)"/><path d="M38 32 C36 37 35 44 36 50 C37 54 38 57 38 60" stroke="#2563eb" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M40 24 Q51 39 60 46" stroke="#2563eb" stroke-width="1" fill="none" stroke-dasharray="3,2.5" opacity="0.4"/><path d="M39 35 Q51 32 61 34" stroke="#2563eb" stroke-width="0.9" fill="none" stroke-dasharray="2,2.5" opacity="0.35"/><rect x="12" y="37" width="3" height="12" rx="1.5" fill="#2563eb"/><rect x="16.5" y="30" width="3" height="19" rx="1.5" fill="#3b82f6"/><rect x="21" y="24" width="3" height="25" rx="1.5" fill="#60a5fa"/><rect x="57" y="37" width="3" height="12" rx="1.5" fill="#2563eb"/><rect x="52.5" y="30" width="3" height="19" rx="1.5" fill="#3b82f6"/><rect x="48" y="24" width="3" height="25" rx="1.5" fill="#60a5fa"/></svg></div>
+      <h2 style="color:#1e3354;font-size:20px">VentLive AI</h2>
+      <p style="color:#162640">Gemini Live — Real-time ICU Ventilation Assistant</p>
+      <p style="color:#162640;margin-top:4px">ARDS · COPD · Post-op Weaning</p>
+      <p style="color:#162640;margin-top:4px">True Voice AI · Native Interruption · SCCM Guidelines</p>
+      <p style="color:#162640;margin-top:2px;font-size:11px">Powered by Vertex AI · gemini-live-2.5-flash-native-audio</p>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <div id="input-row">
+      <textarea id="text-input" aria-label="Type clinical input here"
+        placeholder="Type ventilator data here, or speak naturally — mic is always on"
+        onkeydown="handleKey(event)"></textarea>
+      <!-- Idle: white circle with 4 bars -->
+      <button class="btn-voice" id="voice-btn"
+        onclick="unlockAudio();toggleMic()"
+        title="Start voice session" aria-label="Start voice session">
+        <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
+          <rect x="0"  y="7"  width="4" height="11" rx="2" fill="#111"/>
+          <rect x="6"  y="3"  width="4" height="15" rx="2" fill="#111"/>
+          <rect x="12" y="0"  width="4" height="18" rx="2" fill="#111"/>
+          <rect x="18" y="5"  width="4" height="13" rx="2" fill="#111"/>
+        </svg>
+      </button>
+      <!-- Active: mute toggle (gray→red) -->
+      <button class="btn-mute" id="mute-btn"
+        onclick="toggleMute()"
+        title="Mute microphone" aria-label="Mute microphone"
+        aria-pressed="false" style="display:none">
+        <!-- Unmuted mic -->
+        <svg id="mic-icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/>
+          <path d="M5 10a7 7 0 0 0 14 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="17" x2="12" y2="21" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8"  y1="21" x2="16" y2="21" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <!-- Muted mic (hidden by default) -->
+        <svg id="mic-muted-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" style="display:none">
+          <rect x="9" y="2" width="6" height="12" rx="3" fill="#f87171"/>
+          <path d="M5 10a7 7 0 0 0 14 0" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+          <line x1="17" y1="17" x2="21" y2="21" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="3"  y1="3"  x2="21" y2="21" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="12" y1="17" x2="12" y2="21" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8"  y1="21" x2="16" y2="21" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <!-- Active: End pill with animated bars -->
+      <button class="btn-end-pill" id="end-btn"
+        onclick="endSession()"
+        title="End voice session" aria-label="End voice session"
+        style="display:none">
+        <div class="end-bars">
+          <div class="end-bar"></div>
+          <div class="end-bar"></div>
+          <div class="end-bar"></div>
+          <div class="end-bar"></div>
+        </div>
+        End
+      </button>
+      <button class="btn-send" onclick="unlockAudio();sendInput()" aria-label="Send text input">Send</button>
+    </div>
+    </div>
+  <div id="status-bar">AI responses are for clinical decision support only — always verify with a licensed clinician</div>
+</div>
+
+<script>
+
+// Fix 100vh on Android Chrome (dynamic toolbar)
+function setVH() {
+  document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+}
+setVH();
+window.addEventListener('resize', setVH);
+window.addEventListener('orientationchange', setVH);
+
+const BACKEND = "https://nonobserving-childlike-phung.ngrok-free.dev";
+const HEADERS = {"Content-Type":"application/json","ngrok-skip-browser-warning":"true","X-API-Key":"ventlive-demo-2026"};
+const GH      = {"ngrok-skip-browser-warning":"true","X-API-Key":"ventlive-demo-2026"};
+
+// ── State ────────────────────────────────────────────────
+// ── App state — intentional globals, all declared here ──
+// TODO Issue 36: consolidate into App namespace post-submission
+let activeCase      = null;
+let chatHistory     = {};
+let liveWS          = null;
+let isConnected     = false;
+let micActive       = false;
+let micMuted        = false;
+let audioCtx        = null;   // 16kHz — mic capture
+let audioWorklet    = null;
+let micStream       = null;
+let playCtx         = null;   // 24kHz — AI audio playback
+let nextPlayTime    = 0;
+let isPlaying       = false;
+let audioGeneration = 0;   // increment to instantly invalidate all queued audio
+window._allSources  = [];    // ← ADD THIS
+let liveTranscriptEl = null;  // live AI transcript bubble
+let _suppressNextTranscript = false;  // suppress Gemini readback transcript
+let keepaliveTimer  = null;   // periodic ping to prevent idle timeout
+// aiSpeaking removed — Gemini Live handles barge-in server-side
+let reconnectCount   = 0;     // tracks reconnect attempts in current streak
+let reconnectTimer   = null;  // holds reconnect setTimeout reference
+let reconnectPaused  = false; // true only during intentional disconnect (patient switch/delete)
+const MAX_BACKOFF_MS = 30000; // cap backoff at 30 seconds — never wait longer
+let _pendingAssessment = null; // holds SCCM card until turn_complete fires
+let _lastVoiceBubble   = null; // tracks verbal_script bubble for interruption marking
+let _interruptedAt     = 0;    // timestamp of last interruption (suppress_transcript guard)
+let _waveRAF      = null; // requestAnimationFrame for End pill bars
+let _waveAnalyser = null; // AnalyserNode for real mic levels
+
+
+// ── Clean Arabic/mixed transcripts into English ICU terms ──
+function cleanTranscript(text) {
+  if (!text) return text;
+
+  // Common Arabic → English ICU term mappings
+  var replacements = [
+    // ICU parameters — longest/most specific first
+    ["بي اتش",              "pH"],
+    ["بي اي سي او 2",       "PaCO2"],
+    ["بي اي سي او2",        "PaCO2"],
+    ["باك او 2",            "PaCO2"],
+    ["بي اي او 2",          "PaO2"],
+    ["بي اي او2",           "PaO2"],
+    ["اف اي أو 2",          "FiO2"],
+    ["اف اي او2",           "FiO2"],
+    ["بيبي",                "PEEP"],
+    ["بيب",                 "PEEP"],
+    ["بلاتوه",              "plateau"],
+    ["بلاتو",               "plateau"],
+
+    // Ventilator modes — longest first
+    ["سي بي اي بي",         "CPAP"],
+    ["بي اي بي",            "BiPAP"],
+    ["بي اس في",            "PSV"],
+    ["اي سي",               "AC"],
+    ["في سي",               "VC"],
+
+    // Measurements
+    ["الفوليوم",            "volume"],
+    ["الحجم",               "volume"],
+    ["مللتر",               "mL"],
+    ["مل",                  "mL"],
+    ["ضغط",                 "pressure"],
+    ["معدل",                "rate"],
+    ["سرعة",                "rate"],
+
+    // Noise tags
+    ["<noise>",             ""],
+    ["<صوت>",               ""],
+
+    // Arabic number words
+    ["اثنين",               "2"],
+    ["اتنين",               "2"],
+    ["ثلاثة",               "3"],
+    ["تلاتة",               "3"],
+    ["اربعة",               "4"],
+    ["اربعه",               "4"],
+    ["خمسة",                "5"],
+    ["خمسه",                "5"],
+    ["ستة",                 "6"],
+    ["سته",                 "6"],
+    ["سبعة",                "7"],
+    ["سبعه",                "7"],
+    ["ثمانية",              "8"],
+    ["تمانية",              "8"],
+    ["تسعة",                "9"],
+    ["تسعه",                "9"],
+    ["عشرة",                "10"],
+    ["عشره",                "10"],
+    ["واحد",                "1"],
+    ["صفر",                 "0"],
+  ];
+  // Latin transliterations from speech recognition
+  var latinMap = [
+      [/\bBH\b/gi,    "pH"],
+      [/\bPH\b/gi,    "pH"],
+      [/\bBEEB\b/gi,  "PEEP"],
+      [/\bBIB\b/gi,   "PEEP"],
+      [/\bPLATO\b/gi, "plateau"],
+      [/\bFIO\b/gi,   "FiO2"],
+      [/\bPACO\b/gi,  "PaCO2"],
+      [/\bPAO\b/gi,   "PaO2"],
+  ];
+  var cleaned = text;
+  replacements.forEach(function(pair) {
+      while (cleaned.includes(pair[0])) {
+          cleaned = cleaned.replace(pair[0], pair[1]);
+      }
+  });
+  cleaned = cleaned.replace(/\bاز\b/g, "is");
+  latinMap.forEach(function(pair) {
+      cleaned = cleaned.replace(pair[0], pair[1]);
+  });
+
+  // Remove any remaining Arabic characters
+  cleaned = cleaned.replace(/[\u0600-\u06FF\u0750-\u077F]/g, " ");
+
+  // Clean up extra spaces
+  cleaned = cleaned.replace(/\bاز\b/g, "is").trim();
+
+  return cleaned;
+}
+
+
+// ── AudioWorklet (inline) ────────────────────────────────
+const WORKLET = `
+class Cap extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.buf  = new Float32Array(1600);
+    this.idx  = 0;
+  }
+  process(inputs) {
+    const ch = inputs[0][0];
+    if (!ch) return true;
+    for (let i = 0; i < ch.length; i++) {
+      this.buf[this.idx++] = ch[i];
+      if (this.idx >= 1600) {
+        const p = new Int16Array(1600);
+        for (let j = 0; j < 1600; j++) {
+          const c = Math.max(-1, Math.min(1, this.buf[j]));
+          p[j] = c < 0 ? c * 0x8000 : c * 0x7FFF;
+        }
+        this.port.postMessage({t:"chunk", d:p.buffer}, [p.buffer]);
+        this.idx = 0;
+        this.buf = new Float32Array(1600);
+      }
+    }
+    return true;
+  }
+}
+registerProcessor("cap", Cap);
+`;
+
+window.addEventListener("load", () => {
+  loadPatients();
+  // Auto-open sidebar on desktop/laptop
+  if (window.innerWidth >= 1024) {
+    document.getElementById("sidebar").classList.add("open");
+    document.getElementById("main").classList.add("sidebar-open");
+  }
+});
+
+// ── API helpers ──────────────────────────────────────────
+async function GET(p) {
+  const r = await fetch(BACKEND+p, {headers:GH});
+  if (!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+async function POST(p, b) {
+  const r = await fetch(BACKEND+p, {method:"POST",headers:HEADERS,body:JSON.stringify(b)});
+  if (!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+async function DEL(p) {
+  const r = await fetch(BACKEND+p, {method:"DELETE",headers:GH});
+  if (!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+
+// ════════════════════════════════════════════════════════
+// GEMINI LIVE — WebSocket Connection
+// ════════════════════════════════════════════════════════
+
+function connectLive(caseId) {
+  if (liveWS) { liveWS.close(4999, "switching patient"); liveWS = null; }
+
+  var wsUrl = BACKEND.replace("https://","wss://").replace("http://","ws://")
+            + "/ws/live/" + caseId;
+
+  setStatus("Connecting to Gemini Live...");
+  setConnectionStatus("connecting", "⬤ Connecting...");
+
+  // Capture current reconnect count in this closure
+  // so each onclose handler knows which attempt it belongs to
+  var thisAttempt = reconnectCount;
+
+  liveWS = new WebSocket(wsUrl + '?api_key=ventlive-demo-2026');
+
+  liveWS.onopen = function() {
+    console.log("[Live] WS open");
+    setStatus("Waiting for Gemini session...");
+
+    // ── Keepalive: ping every 20s to prevent idle timeout ──
+    if (keepaliveTimer) clearInterval(keepaliveTimer);
+    keepaliveTimer = setInterval(function() {
+      if (liveWS && liveWS.readyState === 1) {
+        liveWS.send(JSON.stringify({type: "ping"}));
+        console.log("[Keepalive] ping sent");
+      }
+    }, 20000);
+  };;
+
+  liveWS.onmessage = function(e) {
+    handleLiveMsg(JSON.parse(e.data));
+  };
+
+  liveWS.onerror = function(err) {
+    console.error("[Live] WS error:", err);
+    console.error("[Live] Error type:", err.type);
+    console.error("[Live] WS readyState:", liveWS ? liveWS.readyState : "null");
+    setConnectionStatus("", "⬤ Error");
+    setStatus("Connection error — retrying in 3s...");
+  };
+
+  liveWS.onclose = function(event) {
+    isConnected = false;
+    setConnectionStatus("", "⬤ Disconnected");
+    stopMic();
+
+    if (keepaliveTimer) {
+      clearInterval(keepaliveTimer);
+      keepaliveTimer = null;
+    }
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+
+    console.log("[Live] WS closed — code:", event.code,
+                "reason:", event.reason,
+                "clean:", event.wasClean,
+                "reconnectCount:", reconnectCount);
+
+    // Do NOT reconnect if intentionally closed (patient switch or delete)
+    if (event.code === 4999 || reconnectPaused) {
+      console.log("[Live] Intentional close — no reconnect");
+      reconnectCount = 0;
+      return;
+    }
+
+    // Do NOT reconnect if no active patient
+    if (!activeCase) {
+      console.log("[Live] No active patient — no reconnect");
+      return;
+    }
+
+    // Gemini Live has a ~10 min session limit — code 1011 is a normal timeout
+    // Treat it as a clean timeout, not a failure — reset the streak
+    var isGeminiTimeout = (event.code === 1011 ||
+                           event.code === 1001 ||
+                           (event.reason && event.reason.toLowerCase().indexOf("keepalive") >= 0));
+    if (isGeminiTimeout) {
+      console.log("[Live] Gemini session timeout — reconnecting fresh session");
+      reconnectCount = 0;
+    }
+
+    // Exponential backoff: 2s, 4s, 8s, 16s, 30s ceiling — no hard attempt cap
+    reconnectCount++;
+    var delay    = Math.min(MAX_BACKOFF_MS, 1000 * Math.pow(2, reconnectCount));
+    var delaySec = Math.round(delay / 1000);
+
+    console.log("[Live] Reconnect attempt", reconnectCount, "in", delaySec, "s");
+
+    if (isGeminiTimeout) {
+      setStatus("Session refreshed — reconnecting in " + delaySec + "s...");
+    } else if (reconnectCount <= 3) {
+      setStatus("Reconnecting (" + reconnectCount + ") in " + delaySec + "s...");
+    } else {
+      setStatus("Connection interrupted — retrying in " + delaySec + "s...");
+    }
+
+    reconnectTimer = setTimeout(function() {
+      if (activeCase && !reconnectPaused) {
+        console.log("[Live] Executing reconnect attempt", reconnectCount);
+        connectLive(activeCase.case_id);
+      }
+    }, delay);
+  };
+}
+
+function handleLiveMsg(msg) {
+  switch(msg.type) {
+
+    case "session_ready":
+      isConnected    = true;
+      reconnectCount = 0;
+      console.log("[Live] Ready:", msg.diagnosis, msg.model);
+      setConnectionStatus("connected", "⬤ Live");
+      setStatus("🎤 Gemini Live ready — speak naturally");
+      console.log("[Live] Connected — waiting for user to press mic button");
+      break;
+
+    case "audio_chunk":
+      playPCM(msg.data);
+      break;
+
+    case "transcript":
+      if (msg.role === "user") {
+        // Clean transcript before displaying
+        var cleanedText = cleanTranscript(msg.text);
+        var ti = document.getElementById("text-input");
+        ti.value = cleanedText;
+        setStatus("Heard: " + cleanedText.substring(0,60));
+
+        if (!window._doctorBubble) {
+          window._doctorBubble = document.createElement("div");
+          window._doctorBubble.className = "msg msg-voice";
+          window._doctorBubble.textContent = "";
+          var chat = document.getElementById("chat");
+          var es = document.getElementById("empty-state");
+          if (es) es.remove();
+          chat.appendChild(window._doctorBubble);
+        }
+        window._doctorBubble.textContent = cleanedText;
+        document.getElementById("chat").scrollTop = 99999;
+
+      } else {
+        // AI voice transcript
+        var aiText = (msg.text || "").trim();
+
+        // Filter 1: "Analyzing." placeholder — show in status only
+        var isAnalyzing = aiText.toLowerCase() === "analyzing." ||
+                          aiText.toLowerCase() === "analyzing";
+        if (isAnalyzing) {
+          setStatus("⚙️ Analyzing your input...");
+          break;
+        }
+
+        // Filter 2: speech_inject transcript
+        if (_suppressNextTranscript) {
+          break;
+        }
+
+        if (!liveTranscriptEl) {
+          liveTranscriptEl = document.createElement("div");
+          liveTranscriptEl.className = "msg msg-live-ai";
+          liveTranscriptEl.textContent = "";
+          var chat = document.getElementById("chat");
+          var es = document.getElementById("empty-state");
+          if (es) es.remove();
+          chat.appendChild(liveTranscriptEl);
+        }
+        liveTranscriptEl.textContent += msg.text;
+        document.getElementById("chat").scrollTop = 99999;
+      }
+      break;
+
+    case "interrupted":
+      _suppressNextTranscript = false;
+      _interruptedAt = Date.now();
+      softStopPlayback();
+
+      // Mark the voice bubble as interrupted so doctor knows
+      // the full text was NOT spoken — only partial delivery
+      if (_lastVoiceBubble && _lastVoiceBubble.parentNode) {
+        _lastVoiceBubble.textContent += "  ⚡[interrupted]";
+        _lastVoiceBubble.style.opacity = "0.6";
+      }
+      _lastVoiceBubble = null;
+
+      // Reset transcript tracking for the new turn
+      liveTranscriptEl     = null;
+      window._doctorBubble = null;
+
+      setStatus("🎤 Interrupted — listening to you...");
+      break;
+
+    case "turn_complete":
+      _suppressNextTranscript = false;  // reset for next turn
+      // If we have text in the input box but no bubble yet, create one
+      if (!window._doctorBubble) {
+        var ti = document.getElementById("text-input");
+        if (ti && ti.value && ti.value.trim().length > 3) {
+          var chat = document.getElementById("chat");
+          var es   = document.getElementById("empty-state");
+          if (es) es.remove();
+          var bubble = document.createElement("div");
+          bubble.className   = "msg msg-voice";
+         bubble.textContent = ti.value.trim();
+          chat.appendChild(bubble);
+          chat.scrollTop = chat.scrollHeight;
+        }
+      }
+      // Always clear text input at turn_complete regardless of bubble state
+      var tiClear = document.getElementById("text-input");
+      if (tiClear) tiClear.value = "";
+      liveTranscriptEl     = null;
+      window._doctorBubble = null;
+      setStatus("🎤 Speaking... listening for your next update");
+
+      // Render pending SCCM card NOW — after transcript bubble is in DOM
+      if (window._pendingAssessment) {
+        // Remove "Analyzing." transcript bubble if still in DOM
+        if (liveTranscriptEl && liveTranscriptEl.parentNode) {
+          var elText = (liveTranscriptEl.textContent || "").trim().toLowerCase();
+          if (elText === "analyzing." || elText === "analyzing" || elText.length < 15) {
+            liveTranscriptEl.parentNode.removeChild(liveTranscriptEl);
+          }
+        }
+        liveTranscriptEl     = null;
+        window._doctorBubble = null;
+
+        // Render verbal script bubble ABOVE the SCCM card
+        if (window._pendingAssessment.verbal_script) {
+          var chatEl = document.getElementById("chat");
+          var vsBubble       = document.createElement("div");
+          vsBubble.className   = "msg msg-live-ai";
+          vsBubble.textContent = window._pendingAssessment.verbal_script;
+          chatEl.appendChild(vsBubble);
+          _lastVoiceBubble = vsBubble;
+        }
+
+        renderAssessment(window._pendingAssessment);
+        window._pendingAssessment = null;
+
+        if (activeCase) {
+          chatHistory[activeCase.case_id] = document.getElementById("chat").innerHTML;
+        }
+        loadPatients();
+      }
+
+      // Fallback: if no SCCM assessment arrives in 10s, use REST API
+      if (activeCase) {
+        window._assessmentTimer = setTimeout(function() {
+          var ti = document.getElementById("text-input");
+          if (ti && ti.value && ti.value.trim().length > 5) {
+            var inputText = ti.value.trim();
+            console.log("[Fallback] No SCCM via Live — using REST for:", inputText.substring(0,40));
+            fetch(BACKEND + "/analyze", {
+              method: "POST",
+              headers: HEADERS,
+              body: JSON.stringify({
+                case_id:    activeCase.case_id,
+                input_text: inputText
+              })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.type === "question_answer") {
+                // Q&A answered via voice — no bubble needed
+                console.log("[Fallback] Q&A rendered");
+              } else if (d.sccm_recommendation) {
+                renderAssessment(d);
+                console.log("[Fallback] REST assessment rendered");
+              }
+            })
+            .catch(function(e) { console.error("[Fallback] REST failed:", e); });
+          }
+        }, 10000);
+      }
+      break;
+
+    case "question_answer":
+      if (window._assessmentTimer) {
+        clearTimeout(window._assessmentTimer);
+        window._assessmentTimer = null;
+      }
+
+      if (msg.injection_text) {
+        // Remove any "Analyzing." placeholder if still in DOM
+        if (liveTranscriptEl && liveTranscriptEl.parentNode) {
+          liveTranscriptEl.parentNode.removeChild(liveTranscriptEl);
+        }
+        liveTranscriptEl = null;
+
+        // Show the SCCM-built answer as the definitive bubble
+        // Use msg-live-ai style (italic blue) — matches Gemini voice transcript style
+        var chat = document.getElementById("chat");
+        var es   = document.getElementById("empty-state");
+        if (es) es.remove();
+        var div  = document.createElement("div");
+        div.className   = "msg msg-live-ai";
+        div.textContent = msg.injection_text;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+        document.getElementById("chat").scrollTop = 99999;
+
+        // Save to history — suppress_transcript will arrive separately
+        // from the backend when speech_inject is processed
+        if (activeCase) {
+          chatHistory[activeCase.case_id] =
+            document.getElementById("chat").innerHTML;
+        }
+      }
+
+      window._doctorBubble = null;
+      break;
+
+    case "assessment":
+      // Clear fallback timer — real assessment arrived
+      if (window._assessmentTimer) {
+        clearTimeout(window._assessmentTimer);
+        window._assessmentTimer = null;
+      }
+      // If turn_complete already fired (liveTranscriptEl is null),
+      // render immediately — transcript bubble already in DOM
+      if (liveTranscriptEl === null && window._doctorBubble === null) {
+        // Render verbal script bubble ABOVE the SCCM card
+        if (msg.verbal_script) {
+          var chat = document.getElementById("chat");
+          var es   = document.getElementById("empty-state");
+          if (es) es.remove();
+          var vsBubble       = document.createElement("div");
+          vsBubble.className   = "msg msg-live-ai";
+          vsBubble.textContent = msg.verbal_script;
+          chat.appendChild(vsBubble);
+          _lastVoiceBubble = vsBubble;
+        }
+        renderAssessment(msg);
+        if (activeCase) {
+          chatHistory[activeCase.case_id] = document.getElementById("chat").innerHTML;
+        }
+        loadPatients();
+      } else {
+        // turn_complete not yet fired — store and render after
+        window._pendingAssessment = msg;
+      }
+      break;
+
+    case "error":
+      console.error("[Live] Server error:", msg.message);
+      if (msg.message && msg.message.indexOf("1011") >= 0) {
+        setStatus("Session timeout — will reconnect automatically");
+        console.log("[Live] 1011 timeout — letting onclose handle reconnect");
+        // Do NOT reconnect here — let onclose handle it
+        // This prevents double reconnect attempts
+      } else {
+        setStatus("Error: " + msg.message);
+        appendMsg("ai", "⚠️ " + msg.message);
+      }
+      break;
+
+    case "suppress_transcript":
+      // Ignore if we were just interrupted — this suppress belongs
+      // to the OLD speech inject, not the new doctor question
+      if (Date.now() - _interruptedAt < 2000) {
+        console.log("[Suppress] Ignored — too close to interruption");
+        break;
+      }
+      _suppressNextTranscript = true;
+      break;
+
+    case "allow_transcript":
+      // Backend is injecting clinical verbal script — show transcript as bubble
+      _suppressNextTranscript = false;
+      break;
+
+    case "pong": break;
+  }
+}
+
+// ── Microphone capture → Gemini Live ────────────────────
+async function startMic() {
+  if (micActive) return;
+
+  // Clean up any leftover audio context from previous session
+  if (audioCtx) {
+    try { audioCtx.close(); } catch(e) {}
+    audioCtx = null;
+  }
+  if (audioWorklet) {
+    try { audioWorklet.disconnect(); } catch(e) {}
+    audioWorklet = null;
+  }
+  if (micStream) {
+    micStream.getTracks().forEach(function(t) { t.stop(); });
+    micStream = null;
+  }
+
+  try {
+    micStream  = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount:1, sampleRate:16000, echoCancellation:true,
+                noiseSuppression:true, autoGainControl:true }
+    });
+    audioCtx   = new AudioContext({ sampleRate:16000 });
+    var blob    = new Blob([WORKLET], {type:"application/javascript"});
+    var url     = URL.createObjectURL(blob);
+    await audioCtx.audioWorklet.addModule(url);
+
+    var source  = audioCtx.createMediaStreamSource(micStream);
+    audioWorklet = new AudioWorkletNode(audioCtx, "cap");
+    source.connect(audioWorklet);
+
+    audioWorklet.port.onmessage = function(e) {
+      if (e.data.t === "chunk" && liveWS && liveWS.readyState === 1 && !micMuted) {
+        // Always send mic audio — Gemini's VAD handles interruption detection
+        // The aiSpeaking flag no longer blocks mic audio
+        // This is required for barge-in interruption to work
+        var u = new Uint8Array(e.data.d);
+        var s = "";
+        for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
+        liveWS.send(JSON.stringify({ type:"audio_chunk", data:btoa(s) }));
+      }
+    };
+
+    micActive = true;
+    micMuted  = false;
+    document.getElementById("voice-btn").style.display = "none";
+    document.getElementById("mute-btn").style.display  = "flex";
+    document.getElementById("end-btn").style.display   = "flex";
+    _startEndPillWaveform();
+    console.log("[Mic] Started 16kHz");
+
+  } catch(err) {
+    if (err.name === "NotAllowedError") {
+      setStatus("Mic permission denied — allow access in browser");
+    } else {
+      setStatus("Mic error: " + err.message);
+    }
+    console.error("[Mic]", err);
+  }
+}
+
+function stopMic() {
+  micActive = false;
+  micMuted  = false;
+  document.getElementById("voice-btn").style.display = "flex";
+  document.getElementById("mute-btn").style.display  = "none";
+  document.getElementById("end-btn").style.display   = "none";
+  // Reset mute icon state
+  document.getElementById("mic-icon").style.display       = "block";
+  document.getElementById("mic-muted-icon").style.display = "none";
+  document.getElementById("mute-btn").classList.remove("muted");
+  _stopEndPillWaveform();
+  if (audioWorklet) { audioWorklet.disconnect(); audioWorklet = null; }
+  if (micStream)    { micStream.getTracks().forEach(function(t){t.stop();}); micStream = null; }
+  if (audioCtx)     { audioCtx.close(); audioCtx = null; }
+  // Reset mic/mute/end icons to idle state
+  document.getElementById("mic-icon").style.display       = "block";
+  document.getElementById("mic-muted-icon").style.display = "none";
+  console.log("[Mic] Stopped");
+}
+function toggleMic() {
+  if (micActive) {
+    stopMic();
+  } else if (isConnected) {
+    startMic();
+  } else if (activeCase) {
+    setStatus("Reconnecting — please wait...");
+    connectLive(activeCase.case_id);
+  } else {
+    setStatus("Select a patient first");
+  }
+}
+
+function toggleMute() {
+  if (!micActive) return;
+  micMuted = !micMuted;
+  var btn        = document.getElementById("mute-btn");
+  var micIcon    = document.getElementById("mic-icon");
+  var mutedIcon  = document.getElementById("mic-muted-icon");
+  if (micMuted) {
+    btn.classList.add("muted");
+    btn.title                = "Unmute microphone";
+    btn.setAttribute("aria-pressed", "true");
+    micIcon.style.display    = "none";
+    mutedIcon.style.display  = "block";
+    setStatus("🔇 Mic muted — Gemini won't hear background noise");
+    // Freeze bars at low height when muted
+    document.querySelectorAll(".end-bar").forEach(function(b) {
+      b.style.height = "4px";
+    });
+  } else {
+    btn.classList.remove("muted");
+    btn.title                = "Mute microphone";
+    btn.setAttribute("aria-pressed", "false");
+    micIcon.style.display    = "block";
+    mutedIcon.style.display  = "none";
+    setStatus("🎤 Mic live — speak your update");
+    // Resume real waveform
+    _startEndPillWaveform();
+  }
+}
+
+function endSession() {
+  softStopPlayback();
+  stopMic();
+  liveTranscriptEl = null;
+  setStatus("Session ended — press 🎤 to restart");
+}
+
+// ── Audio playback (AI voice — 24kHz PCM) ───────────────
+// ── Audio unlock — must be called inside a real user gesture ──
+// Safari/iOS blocks AudioContext until a tap or click occurs.
+// We unlock both contexts (mic + playback) on the very first
+// user interaction with any button on the page.
+let _audioUnlocked = false;
+
+function unlockAudio() {
+  if (_audioUnlocked) return;
+  _audioUnlocked = true;
+
+  // Unlock playback context
+  if (!playCtx) {
+    playCtx      = new AudioContext({sampleRate:24000});
+    nextPlayTime = playCtx.currentTime;
+    console.log("[Audio] Playback context created on user gesture");
+  }
+  if (playCtx.state === "suspended" || playCtx.state === "interrupted") {
+    playCtx.resume().then(function() {
+      console.log("[Audio] Playback context unlocked — state:", playCtx.state);
+    }).catch(function(e) {
+      console.warn("[Audio] Resume failed:", e);
+    });
+  }
+
+  // Play and immediately stop a silent buffer — this is the standard
+  // iOS unlock trick that tells Safari the context has user consent
+  try {
+    var silentBuf = playCtx.createBuffer(1, 1, 24000);
+    var src       = playCtx.createBufferSource();
+    src.buffer    = silentBuf;
+    src.connect(playCtx.destination);
+    src.start(0);
+    src.stop(0.001);
+    console.log("[Audio] Silent buffer played — iOS unlock complete");
+  } catch(e) {
+    console.warn("[Audio] Silent buffer failed:", e);
+  }
+}
+
+function initPlay() {
+  if (!playCtx) {
+    // Only create here if unlockAudio() hasn't run yet
+    // (i.e., non-iOS browsers where gesture is not required)
+    playCtx      = new AudioContext({sampleRate:24000});
+    nextPlayTime = playCtx.currentTime;
+  }
+  // Handle all three states — suspended, interrupted (iOS), and running
+  if (playCtx.state !== "running") {
+    playCtx.resume().then(function() {
+      console.log("[Audio] Context resumed — state:", playCtx.state);
+    }).catch(function(e) {
+      console.warn("[Audio] initPlay resume failed:", e);
+    });
+  }
+}
+
+function playPCM(b64) {
+  var myGeneration = audioGeneration;
+  initPlay();
+  // Force resume if browser auto-suspended during silence
+  if (playCtx && playCtx.state !== "running") {
+    playCtx.resume().catch(function(e) {
+      console.warn("[Audio] Resume failed in playPCM:", e);
+    });
+  }
+  isPlaying = true;
+  try {
+    var bin = atob(b64);
+    var raw = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) raw[i]=bin.charCodeAt(i);
+    var pcm = new Int16Array(raw.buffer);
+    var f32 = new Float32Array(pcm.length);
+    for (var i=0;i<pcm.length;i++) f32[i]=pcm[i]/32768;
+    var buf = playCtx.createBuffer(1,f32.length,24000);
+    buf.copyToChannel(f32,0);
+    var src = playCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(playCtx.destination);
+    var t = Math.max(nextPlayTime, playCtx.currentTime);
+    window._currentSource = src;
+    window._allSources.push(src);
+    if (myGeneration !== audioGeneration) return;
+    src.start(t);
+    nextPlayTime = t + buf.duration;
+    isPlaying = true;
+    // stop-btn removed — no action needed
+    src.onended = function() {
+      if (myGeneration !== audioGeneration) return;
+      if (window._currentSource === src) window._currentSource = null;
+      var idx = window._allSources ? window._allSources.indexOf(src) : -1;
+      if (idx >= 0) window._allSources.splice(idx, 1);
+      if (nextPlayTime <= playCtx.currentTime + 0.1) {
+        isPlaying = false;
+        console.log("[Audio] AI finished speaking — mic resumed");
+        setStatus("🎤 Your turn — speak now");
+        // waveform removed
+        // stop-btn removed — no action needed
+      }
+    };
+  } catch(e) { console.error("[Play]", e); }
+}
+
+// SOFT stop — pauses audio queue but keeps AudioContext alive for reuse
+// Use this for: interrupted messages, new text input, barge-in
+function softStopPlayback() {
+  audioGeneration++;
+  // Stop EVERY scheduled buffer, not just the last one
+  if (window._allSources) {
+    window._allSources.forEach(function(s) {
+      try { s.stop(); } catch(e) {}
+    });
+    window._allSources = [];
+  }
+  window._currentSource = null;
+  if (playCtx) { nextPlayTime = playCtx.currentTime; }
+  isPlaying = false;
+  // stop-btn removed — no action needed
+}
+
+// HARD stop — fully destroys the AudioContext
+// Use this ONLY on patient disconnect / page unload
+function stopPlayback() {
+  softStopPlayback();
+  if (playCtx) {
+    try { playCtx.close(); } catch(e) {}
+    playCtx        = null;
+    nextPlayTime   = 0;
+    _audioUnlocked = false;
+  }
+  // stop-btn removed — no action needed
+}
+
+
+// ── Send typed text ──────────────────────────────────────
+async function sendInput() {
+  var text = document.getElementById("text-input").value.trim();
+  if (!text || !activeCase) return;
+
+  if (text.length < 3) {
+    setStatus("⚠️ Input too short — please provide clinical details");
+    return;
+  }
+  if (text.length > 2000) {
+    setStatus("⚠️ Input too long — please keep under 2000 characters");
+    return;
+  }
+
+  document.getElementById("text-input").value = "";
+
+  appendMsg("doctor", text);
+
+  if (isConnected && liveWS && liveWS.readyState === 1) {
+    // Send to Gemini Live only — SCCM runs inside the WebSocket handler
+    // REST is NOT called here to prevent duplicate cards
+    setStatus("Analyzing via Gemini Live...");
+    // Soft-stop any currently playing audio (keeps AudioContext alive)
+    softStopPlayback();
+    // Do NOT send stop_audio — it triggers interrupted → destroys context
+    // The backend's SCCM handler already sends "stop" text to Gemini directly
+    liveWS.send(JSON.stringify({type:"text_input", text:text}));
+  } else {
+    // REST only fallback when not connected to Live
+    setStatus("Analyzing via REST...");
+    try {
+      var d = await POST("/analyze", {case_id:activeCase.case_id, input_text:text});
+      if (d.type === "question_answer") {
+        // Q&A answered via voice — no bubble needed
+      } else {
+        renderAssessment(d);
+      }
+      setStatus("Assessment complete");
+      chatHistory[activeCase.case_id] = document.getElementById("chat").innerHTML;
+      await loadPatients();
+    } catch(e) {
+      appendMsg("ai", "Error: "+e.message);
+    }
+  }
+}
+
+function handleKey(e) {
+  if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); sendInput(); }
+}
+
+// ── Patient management ───────────────────────────────────
+let _patientPage = 0;
+let _patientLimit = 10;
+let _patientTotal = 0;
+
+async function loadPatients(offset) {
+  if (offset === undefined) offset = _patientPage * _patientLimit;
+  try {
+    var d = await GET("/cases?limit=" + _patientLimit + "&offset=" + offset);
+    _patientTotal = d.total || 0;
+    _patientPage  = Math.floor(offset / _patientLimit);
+    renderPatientList(d.cases || []);
+  } catch(e) {
+    document.getElementById("patient-list").innerHTML =
+      "<div style='color:#ef4444;font-size:12px'>Backend offline</div>";
+  }
+}
+
+function renderPatientList(cases) {
+  var el = document.getElementById("patient-list");
+  if (!cases.length) {
+    el.innerHTML = "<div style='color:#1e3354;font-size:12px'>No patients yet</div>";
+    return;
+  }
+  el.innerHTML = cases.map(function(c) {
+    var isActive = activeCase && c.case_id === activeCase.case_id;
+    var cid = c.case_id;
+    return (
+      '<div class="patient-card '+(isActive?"active":"")+'">' +
+        '<div class="patient-card-body" onclick="selectPatient(\''+cid+'\')">' +
+          '<div class="patient-diagnosis">'+c.diagnosis+'</div>' +
+          '<div class="patient-id">'+cid.substring(0,10)+'...</div>' +
+          '<div class="patient-meta">' +
+            (c.assessment_count ? '<span>💬 '+c.assessment_count+'</span>' : '') +
+            (c.ibw_kg ? '<span class="patient-ibw">IBW '+c.ibw_kg+' kg</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="patient-menu-wrapper">' +
+          '<button class="three-dot-btn" onclick="toggleMenu(\''+cid+'\',event)">⋮</button>' +
+          '<div class="dropdown-menu" id="menu-'+cid+'">' +
+            '<div class="dropdown-item delete-item" onclick="confirmDelete(\''+cid+'\',\''+c.diagnosis+'\')">🗑 Delete</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join("");
+
+  // Pagination bar
+  var totalPages = Math.ceil(_patientTotal / _patientLimit);
+  var curPage    = _patientPage + 1;
+  if (totalPages > 1) {
+    el.innerHTML += (
+      '<div style="display:flex;justify-content:space-between;align-items:center;' +
+      'margin-top:8px;padding-top:6px;border-top:1px solid #1e3354;font-size:11px;color:#7faacc;">' +
+      '<button onclick="loadPatients(' + Math.max(0, (_patientPage-1)*_patientLimit) + ')" ' +
+      'style="background:#1e3354;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;"' +
+      (_patientPage === 0 ? ' disabled' : '') + '>◀</button>' +
+      '<span>Page ' + curPage + ' / ' + totalPages + '</span>' +
+      '<button onclick="loadPatients(' + ((_patientPage+1)*_patientLimit) + ')" ' +
+      'style="background:#1e3354;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer;"' +
+      (curPage >= totalPages ? ' disabled' : '') + '>▶</button>' +
+      '</div>'
+    );
+  }
+}
+
+async function createPatient() {
+  var name      = document.getElementById("inp-name").value.trim();
+  var diagnosis = document.getElementById("inp-diagnosis").value.trim();
+  if (!diagnosis) { alert("Enter a diagnosis"); return; }
+  var height = document.getElementById("inp-height").value;
+  var sex    = document.getElementById("inp-sex").value;
+
+  // Combine name + diagnosis for display
+  var fullDiagnosis = name ? name + " — " + diagnosis : diagnosis;
+
+  try {
+    var d = await POST("/cases/new", {
+      diagnosis: fullDiagnosis,
+      height_cm: height ? parseFloat(height) : null,
+      sex: sex
+    });
+    var baselinePaco2 = document.getElementById("inp-baseline-paco2").value;
+    if (baselinePaco2) {
+      try {
+        await fetch(BACKEND + "/cases/" + d.case.case_id + "/baseline_paco2", {
+          method: "POST",
+          headers: HEADERS,
+          body: JSON.stringify({ value: parseFloat(baselinePaco2) })
+        });
+      } catch(e) { console.warn("baseline_paco2 save failed:", e); }
+    }
+    document.getElementById("inp-name").value           = "";
+    document.getElementById("inp-diagnosis").value      = "";
+    document.getElementById("inp-height").value         = "";
+    document.getElementById("inp-baseline-paco2").value = "";
+    await loadPatients();
+    await selectPatient(d.case.case_id);
+  } catch(e) { alert("Error: "+e.message); }
+}
+
+async function selectPatient(caseId) {
+  document.getElementById("text-input").value = "";
+  // Reset reconnect state
+  reconnectCount  = 0;
+  reconnectPaused = false;
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+
+  // Disconnect existing Live session
+  if (liveWS) { liveWS.close(4999, "switching patient"); liveWS = null; }
+  document.getElementById("text-input").value = "";
+  stopMic();
+  stopPlayback();
+
+  // Strip any in-progress transcript bubbles before saving history
+  if (liveTranscriptEl && liveTranscriptEl.parentNode) {
+      liveTranscriptEl.parentNode.removeChild(liveTranscriptEl);
+  }
+  if (window._doctorBubble && window._doctorBubble.parentNode) {
+      window._doctorBubble.parentNode.removeChild(window._doctorBubble);
+  }
+  liveTranscriptEl         = null;
+  window._doctorBubble     = null;
+  window._pendingAssessment = null;
+
+  if (activeCase) {
+      chatHistory[activeCase.case_id] = document.getElementById("chat").innerHTML;
+  }
+  try {
+    var d = await GET("/cases/"+caseId);
+    activeCase = d.case;
+    document.getElementById("header-patient").textContent =
+      "Patient: "+activeCase.diagnosis +
+      (activeCase.ibw_kg ? " | IBW "+activeCase.ibw_kg+" kg" : "");
+
+    var chat = document.getElementById("chat");
+    if (chatHistory[caseId]) {
+      chat.innerHTML = chatHistory[caseId];
+    } else if (activeCase.ai_assessments && activeCase.ai_assessments.length > 0) {
+      chat.innerHTML = "";
+      var headerDiv = document.createElement("div");
+      headerDiv.style.cssText = "text-align:center;color:#1e3354;font-size:13px;padding:20px";
+      headerDiv.innerHTML =
+        '<strong style="color:#3a5070">' + activeCase.diagnosis + '</strong> — session restored<br>' +
+        (activeCase.ibw_kg
+          ? 'IBW = ' + activeCase.ibw_kg + ' kg | TV target = ' + Math.round(6 * activeCase.ibw_kg) + ' mL (6 mL/kg)'
+          : 'Add height + sex for IBW-based TV targets') +
+        '<br><span style="color:#4a7ab5;font-size:11px">↩ ' + activeCase.ai_assessments.length + ' previous assessment(s) restored</span>';
+      chat.appendChild(headerDiv);
+      var toRender = activeCase.ai_assessments;
+      toRender.forEach(function(assessment) {
+        if (assessment.input) {
+          var inputBubble = document.createElement("div");
+          inputBubble.className = "msg msg-doctor";
+          inputBubble.textContent = assessment.input.substring(0, 200);
+          chat.appendChild(inputBubble);
+        }
+
+        // Question/answer pair — restore as plain text bubble
+        if (assessment.source === "question_answer") {
+          var qaText = assessment.verbal_script || assessment.gemini_narrative;
+          if (qaText) {
+            var qaBubble = document.createElement("div");
+            qaBubble.className = "msg msg-ai";
+            qaBubble.textContent = qaText;
+            chat.appendChild(qaBubble);
+          }
+          return;
+        }
+
+        if (assessment.verbal_script) {
+          var narrativeBubble = document.createElement("div");
+          narrativeBubble.className = "msg msg-live-ai";
+          narrativeBubble.textContent = assessment.verbal_script;
+          chat.appendChild(narrativeBubble);
+        }
+        if (assessment.sccm_recommendation) {
+          renderAssessment({
+            sccm_recommendation: assessment.sccm_recommendation,
+            gemini_narrative:    assessment.gemini_narrative    || "",
+            safety_flags:        assessment.safety_flags        || "",
+            extracted_data:      assessment.extracted_data      || {},
+            trend:               assessment.trend               || {}
+          });
+        }
+      });
+      chatHistory[caseId] = chat.innerHTML;
+      chat.scrollTop = chat.scrollHeight;
+    } else {
+      chat.innerHTML =
+        '<div style="text-align:center;color:#1e3354;font-size:13px;padding:30px">' +
+        '<strong style="color:#3a5070">' + activeCase.diagnosis + '</strong> — new session<br>' +
+        (activeCase.ibw_kg
+          ? 'IBW = ' + activeCase.ibw_kg + ' kg | TV target = ' + Math.round(6 * activeCase.ibw_kg) + ' mL (6 mL/kg)'
+          : 'Add height + sex for IBW-based TV targets') +
+        '</div>';
+    }
+    chat.scrollTop = chat.scrollHeight;
+    document.getElementById("input-area").style.display = "flex";
+    await loadPatients();
+    if (window.innerWidth < 1024) closeSidebar();
+
+    // Connect Gemini Live for this patient
+    setTimeout(function() { connectLive(caseId); }, 300);
+
+  } catch(e) { alert("Error: "+e.message); }
+}
+
+function toggleMenu(caseId, event) {
+  event.stopPropagation();
+  document.querySelectorAll(".dropdown-menu.open").forEach(function(m){m.classList.remove("open");});
+  var menu = document.getElementById("menu-"+caseId);
+  if (menu) menu.classList.toggle("open");
+}
+document.addEventListener("click", function() {
+  document.querySelectorAll(".dropdown-menu.open").forEach(function(m){m.classList.remove("open");});
+});
+function confirmDelete(caseId, diagnosis) {
+  var menu = document.getElementById("menu-"+caseId);
+  if (menu) menu.classList.remove("open");
+  if (confirm("Delete '"+diagnosis+"'? Cannot be undone.")) deletePatient(caseId, diagnosis);
+}
+
+function confirmDeleteAll() {
+  var count = document.querySelectorAll(".patient-card").length;
+  if (count === 0) { alert("No patients to remove."); return; }
+  if (confirm("Remove ALL " + count + " patient(s)?\n\nThis cannot be undone.")) {
+    deleteAllPatients();
+  }
+}
+
+async function deleteAllPatients() {
+  reconnectPaused = true;
+  if (liveWS) { liveWS.close(4999, "all patients deleted"); liveWS = null; }
+  stopMic(); stopPlayback();
+  try {
+    await DEL("/cases");
+    activeCase = null;
+    Object.keys(chatHistory).forEach(function(k) { delete chatHistory[k]; });
+    document.getElementById("chat").innerHTML =
+      '<div style="text-align:center;color:#1e3354;padding:40px">All patients removed.</div>';
+    document.getElementById("input-area").style.display = "none";
+    document.getElementById("header-patient").textContent = "\u2190 Select a patient";
+    setConnectionStatus("", "\u2B24 Disconnected");
+    await loadPatients();
+  } catch(e) { alert("Delete all failed: "+e.message); }
+}
+async function deletePatient(caseId, diagnosis) {
+  reconnectPaused = true;    // ← intentional — patient is gone, don't reconnect
+  if (liveWS) { liveWS.close(4999, "patient deleted"); liveWS = null; }
+  stopMic(); stopPlayback();
+  try {
+    await DEL("/cases/"+caseId);
+    if (activeCase && activeCase.case_id === caseId) {
+      activeCase = null;
+      document.getElementById("chat").innerHTML =
+        '<div style="text-align:center;color:#1e3354;padding:40px">Patient deleted</div>';
+      document.getElementById("input-area").style.display = "none";
+      document.getElementById("header-patient").textContent = "← Select a patient";
+      setConnectionStatus("","⬤ Disconnected");
+    }
+    delete chatHistory[caseId];
+    await loadPatients();
+  } catch(e) { alert("Delete failed: "+e.message); }
+}
+
+// ── Render SCCM assessment ───────────────────────────────
+
+function sanitizeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g,  "&amp;")
+    .replace(/</g,  "&lt;")
+    .replace(/>/g,  "&gt;")
+    .replace(/"/g,  "&quot;")
+    .replace(/'/g,  "&#039;");
+}
+
+function renderAssessment(data) {
+  var r  = data.sccm_recommendation || {};
+  var nav = data.gemini_narrative   || "";
+  var sf  = data.safety_flags       || "";
+
+  var statusClass =
+    r.ventilation_status==="Stable"    ? "status-stable"    :
+    r.ventilation_status==="Worsening" ? "status-worsening" : "status-critical";
+
+  var dpClass = "ok";
+  if (!r.driving_pressure || r.driving_pressure.startsWith("Not")) {
+    dpClass = "";  // neutral — data not available
+  } else if (r.driving_pressure.indexOf("DANGEROUS") >= 0) {
+    dpClass = "danger";
+  } else if (r.driving_pressure.indexOf("ELEVATED") >= 0) {
+    dpClass = "warning";
+  } else if (r.driving_pressure.indexOf("BORDERLINE") >= 0) {
+    dpClass = "warning";
+  }
+  // else: dpClass stays "ok" — within safe range
+
+  // Card border color based on status
+  var cardBorder =
+    r.ventilation_status === "Stable"    ? "#22c55e" :
+    r.ventilation_status === "Worsening" ? "#f59e0b" : "#ef4444";
+
+  // Status icon
+  var statusIcon =
+    r.ventilation_status === "Stable"    ? "🟢" :
+    r.ventilation_status === "Worsening" ? "🟠" : "🔴";
+
+  var html =
+    '<div style="border-left:4px solid ' + cardBorder + ';padding-left:12px">' +
+    '<div style="display:flex;align-items:baseline;gap:8px">' +
+      '<span class="ai-label">Ventilation Status</span>' +
+      '<span class="'+statusClass+'">' + statusIcon + ' ' + sanitizeHtml(r.ventilation_status||"Unknown") + '</span>' +
+    '</div>';
+
+  var sfClean = (typeof sf === 'string' ? sf : String(sf ?? "")).trim().toLowerCase();
+  var sfHide  = !sf ||
+                sfClean === "" ||
+                sfClean === "none identified" ||
+                sfClean === "none identified." ||
+                sfClean === "none" ||
+                sfClean.length < 5;
+  if (!sfHide) {
+    // Format bullet points as proper list items
+    var sfFormatted = (typeof sf === 'string' ? sf : String(sf ?? "")).replace(/\*\s*/g, "<br>• ").replace(/^<br>/, "");
+    html += '<div class="safety-flag-box">⚠️ <strong>Safety Flags:</strong>' + sfFormatted + '</div>';
+  }
+  if (nav) {
+    html += '<div class="ai-section"><div class="ai-label">Clinical Context</div>' +
+            '<div class="narrative-box">'+sanitizeHtml(nav)+'</div></div>';
+  }
+  html += '<div class="ai-section"><div class="ai-label">Physiologic Interpretation</div>' +
+          '<div style="color:#c8d8f0;font-size:13px">'+(sanitizeHtml(r.physiologic_interpretation||"—"))+'</div></div>';
+
+  if (r.trend_summary && r.trend_summary.indexOf("First assessment")<0) {
+    html += '<div class="trend-badge">📈 '+sanitizeHtml(r.trend_summary)+'</div>';
+  }
+
+  var nsHtml = (r.immediate_next_step||"—")
+    .split(" | ")
+    .filter(function(s) { return s.trim().length > 0; })
+    .map(function(s,i) {
+      var isUrgent = s.indexOf("URGENT") >= 0 ||
+                     s.indexOf("CRITICAL") >= 0 ||
+                     s.indexOf("IMMEDIATE") >= 0 ||
+                     s.indexOf("DANGER") >= 0;
+      var isWarning = s.indexOf("CAUTION") >= 0 ||
+                      s.indexOf("WARNING") >= 0 ||
+                      s.indexOf("ALERT") >= 0;
+      var textColor = isUrgent  ? "#ef4444" :
+                      isWarning ? "#f59e0b" : "#d1fae5";
+      return '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start">' +
+             '<span style="color:#4ade80;font-weight:700;min-width:22px;flex-shrink:0">' +
+             (i+1)+'.</span>' +
+             '<span style="color:'+textColor+'">'+sanitizeHtml(s)+'</span></div>';
+    }).join("");
+
+  html += '<div class="ai-section"><div class="ai-label">Immediate Next Step</div>' +
+          '<div class="next-step-box">'+nsHtml+'</div></div>' +
+          '<div class="ai-section"><div class="ai-label">Monitoring & Safety</div>' +
+          '<div class="monitoring-box">'+(sanitizeHtml(r.monitoring_and_safety||"—"))+'</div></div>' +
+          '<div class="ai-section"><div class="ai-label">Escalation Criteria</div>' +
+          '<div class="escalation-box">' +
+          (r.escalation_criteria||"—")
+            .split(/\.\s+(?=[A-Z])|\.\s*->|(?<=\.)\s+(?=P\/F|dP|pH|Pplat|RV|Haemo|RSBI|Failed|Reintub|Escalate|Auto|FiO2|GCS|Vasopress)/)
+            .filter(function(s) { return s.trim().length > 3; })
+            .map(function(s) {
+              var isRed    = s.indexOf("ECMO") >= 0 || s.indexOf("pH < 7.20") >= 0 ||
+                             s.indexOf("Reintubate") >= 0 || s.indexOf("CPR") >= 0;
+              var isOrange = s.indexOf("->") >= 0 || s.indexOf("senior") >= 0 ||
+                             s.indexOf("consult") >= 0 || s.indexOf("referral") >= 0;
+              var color    = isRed ? "#ef4444" : isOrange ? "#f59e0b" : "#fbbf24";
+              return '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start">' +
+                     '<span style="color:' + color + ';flex-shrink:0">•</span>' +
+                     '<span style="color:' + color + '">' + sanitizeHtml(s.trim()) + '</span>' +
+                     '</div>';
+            })
+            .join("") +
+          '</div></div>';
+
+  html += '<div class="metrics-row">';
+
+  var dpVal = "N/A";
+  if (r.driving_pressure && !r.driving_pressure.startsWith("Not"))
+    dpVal = r.driving_pressure.split(" ")[0];
+  html += '<div class="metric-card"><div class="metric-label">Driving Pressure</div>' +
+          '<div class="metric-value '+dpClass+'">'+dpVal+'</div>' +
+          '<div class="metric-note">Target &lt;15 cmH₂O</div></div>';
+
+  var diagForPF = (activeCase && activeCase.diagnosis || "").toLowerCase();
+  var showPF    = diagForPF.indexOf("copd")      < 0 &&
+                  diagForPF.indexOf("hypercapn") < 0 &&
+                  diagForPF.indexOf("obstruct")  < 0;
+  if (r.pf_ratio && showPF) {
+    var pf    = parseFloat(r.pf_ratio);
+    var isSF  = r.physiologic_interpretation &&
+                r.physiologic_interpretation.indexOf("S/F") >= 0;
+
+    var pfColor = pf < 100 ? "danger" : pf < 200 ? "warning" : "ok";
+    var pfNote  = pf < 100  ? "Severe &lt;100"    :
+                  pf < 200  ? "Moderate 100–200"  :
+                  pf <= 300 ? "Mild 200–300"       : "Normal &gt;300";
+
+    if (isSF) {
+        // S/F surrogate card — shown instead of P/F card
+        var sfVal   = r.pf_ratio;   // value stored is the estimated P/F midpoint
+        // Reconstruct S/F label from physiologic interpretation
+        var sfMatch = r.physiologic_interpretation.match(/S\/F\s*=\s*(\d+)/);
+        var sfNum   = sfMatch ? sfMatch[1] : sfVal;
+        var sfColor = sfNum < 89  ? "danger"  :
+                      sfNum < 150 ? "warning" : "ok";
+        var sfNote  = sfNum < 89  ? "≈ P/F &lt;100 (severe)"  :
+                      sfNum < 150 ? "≈ P/F &lt;150 (prone ?)" :
+                      sfNum < 235 ? "≈ P/F &lt;200 (moderate)" : "≈ P/F &gt;200";
+        html += '<div class="metric-card">' +
+                '<div class="metric-label">S/F Ratio</div>' +
+                '<div class="metric-value ' + sfColor + '">' + sfNum + '</div>' +
+                '<div class="metric-note">' + sfNote + '<br>' +
+                '<span style="color:#4a7ab5;font-size:9px">ABG needed to confirm</span>' +
+                '</div>' +
+                '</div>';
+    } else {
+        // Real ABG-confirmed P/F card
+        html += '<div class="metric-card">' +
+                '<div class="metric-label">P/F Ratio</div>' +
+                '<div class="metric-value ' + pfColor + '">' + r.pf_ratio + '</div>' +
+                '<div class="metric-note">' + pfNote + '</div>' +
+                '</div>';
+    }
+  }
+  if (r.tv_per_kg_ibw) {
+    var tv = parseFloat(r.tv_per_kg_ibw);
+    var diag = (activeCase && activeCase.diagnosis || "").toLowerCase();
+    var isCOPD  = diag.indexOf("copd") >= 0 || diag.indexOf("hypercapn") >= 0 || diag.indexOf("obstruct") >= 0;
+    var isARDS  = diag.indexOf("ards") >= 0 || diag.indexOf("hypox") >= 0;
+    var tvColor, tvNote;
+    if (isCOPD) {
+      // COPD target: 6–8 mL/kg — above 8 is warning, above 10 is danger
+      tvColor = tv > 10 ? "danger" : tv > 8 ? "warning" : "ok";
+      tvNote  = "mL/kg | Target 6–8 (COPD)";
+    } else if (isARDS) {
+      // ARDS target: ≤6 mL/kg — above 6 is warning, above 8 is danger
+      tvColor = tv > 8 ? "danger" : tv > 6 ? "warning" : "ok";
+      tvNote  = "mL/kg | Target ≤6 (ARDS)";
+    } else {
+      // Default / weaning: above 6.5 warning, above 8 danger
+      tvColor = tv > 8 ? "danger" : tv > 6.5 ? "warning" : "ok";
+      tvNote  = "mL/kg | Target ≤6";
+    }
+    html += '<div class="metric-card"><div class="metric-label">TV / IBW</div>' +
+            '<div class="metric-value ' + tvColor + '">' + r.tv_per_kg_ibw.split(" ")[0] + '</div>' +
+            '<div class="metric-note">' + tvNote + '</div></div>';
+  }
+  if (r.rsbi && r.rsbi_relevant) {
+    var rs=parseFloat(r.rsbi);
+    html += '<div class="metric-card"><div class="metric-label">RSBI</div>' +
+            '<div class="metric-value '+(rs>=105?"danger":rs>=80?"warning":"ok")+'">'+rs+'</div>' +
+            '<div class="metric-note">Extubate if &lt;105</div></div>';
+  }
+  if (r.map) {
+    var mp=parseFloat(r.map);
+    html += '<div class="metric-card"><div class="metric-label">MAP</div>' +
+            '<div class="metric-value '+(mp<65?"danger":mp<70?"warning":"ok")+'">'+mp+'</div>' +
+            '<div class="metric-note">Target ≥65 mmHg</div></div>';
+  }
+
+  var diagLower = (activeCase && activeCase.diagnosis || "").toLowerCase();
+  var isWeaningCase = diagLower.indexOf("wean") >= 0 ||
+                      diagLower.indexOf("sbt")  >= 0 ||
+                      diagLower.indexOf("extub") >= 0 ||
+                      diagLower.indexOf("post")  >= 0 ||
+                      diagLower.indexOf("liber") >= 0;
+  var sbtStatus = (data.extracted_data && data.extracted_data.sbt_status) || null;
+
+  if (!sbtStatus && r.trend_summary) {
+    var ts = r.trend_summary.toLowerCase();
+    if      (ts.indexOf("sbt passed")  >= 0) sbtStatus = "completed";
+    else if (ts.indexOf("sbt failed")  >= 0) sbtStatus = "failing";
+    else if (ts.indexOf("ready for")   >= 0) sbtStatus = "not started";
+    else if (ts.indexOf("criteria not") >= 0) sbtStatus = "not started";
+  }
+
+  if (isWeaningCase && sbtStatus) {
+    var sbtColor = sbtStatus === "passing"     ? "ok"      :
+                   sbtStatus === "completed"   ? "ok"      :
+                   sbtStatus === "failing"     ? "danger"  : "";
+    var sbtIcon  = sbtStatus === "passing"     ? "▶"       :
+                   sbtStatus === "completed"   ? "✓"       :
+                   sbtStatus === "failing"     ? "✕"       : "—";
+    var sbtNote  = sbtStatus === "passing"     ? "Trial in progress"  :
+                   sbtStatus === "completed"   ? "Trial passed"       :
+                   sbtStatus === "failing"     ? "Trial failed"       :
+                                                "Not yet started";
+    html += '<div class="metric-card">' +
+            '<div class="metric-label">SBT Status</div>' +
+            '<div class="metric-value ' + sbtColor + '">' + sbtIcon + '</div>' +
+            '<div class="metric-note">' + sbtNote + '</div>' +
+            '</div>';
+  }
+
+  html += '</div>';
+  html += '</div>';  // close the colored border div
+
+  // Staleness warnings — prepended above the card
+  var staleHtml = '';
+  if (data.extracted_data) {
+    if (data.extracted_data._stale_abg_warning) {
+      staleHtml += '<div class="stale-warning">⚠️ ' + sanitizeHtml(data.extracted_data._stale_abg_warning) + '</div>';
+    }
+    if (data.extracted_data._stale_vent_warning) {
+      staleHtml += '<div class="stale-warning">⚠️ Ventilator settings older than 4h — verify current settings at bedside</div>';
+    }
+  }
+  html = staleHtml + html;
+
+  appendMsg("ai", html, true);
+}
+
+// ── End Pill Real-time Waveform ──────────────────────────
+function _startEndPillWaveform() {
+  _stopEndPillWaveform(); // clear any previous
+  // Try to attach AnalyserNode to live mic stream
+  if (audioCtx && micStream) {
+    try {
+      _waveAnalyser = audioCtx.createAnalyser();
+      _waveAnalyser.fftSize = 32;
+      _waveAnalyser.smoothingTimeConstant = 0.6;
+      var src = audioCtx.createMediaStreamSource(micStream);
+      src.connect(_waveAnalyser);
+    } catch(e) {
+      _waveAnalyser = null;
+    }
+  }
+  _animateEndPill();
+}
+
+function _animateEndPill() {
+  if (!micActive) return;
+  var bars = document.querySelectorAll(".end-bar");
+  if (!bars.length) return;
+
+  if (_waveAnalyser && !micMuted) {
+    // Real mic levels
+    var data = new Uint8Array(_waveAnalyser.frequencyBinCount);
+    _waveAnalyser.getByteFrequencyData(data);
+    // Map 4 bars to frequency bands
+    var bands = [0, 2, 5, 9]; // low → high freq indices
+    bars.forEach(function(bar, i) {
+      var level = (data[bands[i]] || 0) / 255;
+      var h = Math.max(4, Math.round(level * 18));
+      bar.style.height = h + "px";
+    });
+  } else if (!micMuted) {
+    // Fallback: gentle idle pulse (very subtle, near flat)
+    var t = Date.now() / 800;
+    bars.forEach(function(bar, i) {
+      var h = Math.max(4, Math.round(5 + Math.sin(t + i) * 1.5));
+      bar.style.height = h + "px";
+    });
+  }
+  // If muted — bars stay frozen at 4px (set in toggleMute)
+
+  _waveRAF = requestAnimationFrame(_animateEndPill);
+}
+
+function _stopEndPillWaveform() {
+  if (_waveRAF) { cancelAnimationFrame(_waveRAF); _waveRAF = null; }
+  _waveAnalyser = null;
+  // Reset bars to flat
+  document.querySelectorAll(".end-bar").forEach(function(b) {
+    b.style.height = "4px";
+  });
+}
+
+function appendMsg(type, content, isHTML) {
+  var chat = document.getElementById("chat");
+  var es   = document.getElementById("empty-state");
+  if (es) es.remove();
+  var div = document.createElement("div");
+  div.className = "msg " +
+    (type==="doctor"?"msg-doctor":
+     type==="voice" ?"msg-voice" :"msg-ai");
+  if (isHTML) div.innerHTML = content;
+  else        div.textContent = content;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// ── Utilities ────────────────────────────────────────────
+function setConnectionStatus(cls, text) {
+  var el   = document.getElementById("connection-status");
+  var dot  = document.getElementById("conn-dot") && document.getElementById("conn-dot").querySelector("circle");
+  var span = document.getElementById("conn-text");
+  el.className = "connected" === cls ? "connected" :
+                 "connecting" === cls ? "connecting" : "";
+  el.id = "connection-status";
+  // Update dot color
+  if (dot) {
+    dot.setAttribute("fill",
+      cls === "connected"  ? "#4ade80" :
+      cls === "connecting" ? "#fbbf24" : "#ef4444"
+    );
+  }
+  // Update text (strip ⬤ symbol — dot is now SVG)
+  if (span) span.textContent = text.replace("⬤ ","").replace("⬤","");
+  else el.textContent = text;
+}
+
+function toggleSidebar() {
+  var sidebar  = document.getElementById("sidebar");
+  var overlay  = document.getElementById("sidebar-overlay");
+  var main     = document.getElementById("main");
+  var isOpen   = sidebar.classList.toggle("open");
+  var isDesktop = window.innerWidth >= 1024;
+  if (isDesktop) {
+    main.classList.toggle("sidebar-open", isOpen);
+  } else {
+    overlay.classList.toggle("open", isOpen);
+  }
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebar-overlay").classList.remove("open");
+  document.getElementById("main").classList.remove("sidebar-open");
+}
+function setStatus(msg) {
+  // Status messages are shown in the connection indicator (top right)
+  // Status bar is reserved for the clinical disclaimer only
+  console.log("[Status] " + msg);
+}
+</script>
+</body>
+</html>
