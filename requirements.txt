@@ -1,0 +1,30 @@
+# ══════════════════════════════════════════════════════
+# requirements.txt — VentLive AI
+# Python 3.11+
+# ══════════════════════════════════════════════════════
+
+# ── Web framework ─────────────────────────────────────
+fastapi>=0.110.0,<1.0.0
+uvicorn[standard]>=0.29.0,<1.0.0
+# [standard] bundles uvloop + websockets + httptools
+# Listed explicitly below to enforce minimum versions
+
+# ── Data validation ───────────────────────────────────
+pydantic>=2.0.0,<3.0.0
+
+# ── Google AI ─────────────────────────────────────────
+# Gemini 2.5 Flash — clinical NLU extraction
+# Gemini Live 2.5 Flash Native Audio — voice I/O via Vertex AI
+google-genai>=0.5.0
+
+# ── Google Cloud ──────────────────────────────────────
+# Firestore — persistent patient case storage
+# Falls back to in-memory dict if unavailable
+google-cloud-firestore>=2.16.0,<3.0.0
+
+# ── Async performance ─────────────────────────────────
+# Note: uvloop and websockets are included via uvicorn[standard].
+# Listed explicitly to enforce minimum versions required
+# for PCM audio binary frame support.
+uvloop>=0.19.0
+websockets>=12.0
