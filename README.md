@@ -20,6 +20,27 @@ Built for the **[Gemini Live Agent Challenge](https://geminiliveagentchallenge.d
 
 ---
 
+## 🧪 Reproducible Testing
+
+The fastest way to verify VentLive AI is running:
+```bash
+# 1. Health check — confirms backend is live on Google Cloud
+curl https://ventlive-ai-270502917056.us-central1.run.app/health
+
+# Expected response:
+# {"status":"ok","service":"VentLive AI v4.0",
+#  "model":"gemini-live-2.5-flash-native-audio",
+#  "platform":"Vertex AI","storage":{"backend":"firestore",...}}
+
+# 2. Open the frontend
+# https://ventassist-dev.github.io/ventlive-ai/index.html
+```
+
+For full local setup and Cloud Run deployment instructions
+see [Spin-Up Instructions](#spin-up-instructions) below.
+
+---
+
 ## Table of Contents
 
 1. [The Problem](#the-problem)
