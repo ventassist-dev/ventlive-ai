@@ -675,8 +675,6 @@ ventlive-ai/
 ├── architecture.html    # Interactive system architecture diagram
 │                        # (open in any browser, no dependencies)
 │
-├── ARCHITECTURE.md      # Full annotated architecture documentation
-│
 ├── deploy.sh            # Automated Cloud Run deployment script
 │
 ├── Dockerfile           # Container definition for Cloud Run
