@@ -393,6 +393,10 @@ The project demo video shows:
 
 ### Local Development
 
+> For complete Docker build, run, stop, and cleanup commands see
+> [`DOCKER.md`](./DOCKER.md)
+```
+
 #### Step 1 — Clone the Repository
 
 ```bash
