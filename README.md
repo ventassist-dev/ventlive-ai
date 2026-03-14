@@ -682,7 +682,11 @@ ventlive-ai/
 ├── deploy.sh            # Automated Cloud Run deployment script
 │
 ├── Dockerfile           # Container definition for Cloud Run
-│
+|
+├── DOCKER.md            # Complete Docker command reference —
+│                        # build, run, verify, stop, cleanup,
+│                        # port conflict detection, rebuild workflow
+|
 ├── requirements.txt     # Python dependencies
 │
 └── .env.example         # Environment variable template
