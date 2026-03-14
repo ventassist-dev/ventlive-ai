@@ -1,9 +1,33 @@
 # VentLive AI
-### Real-Time Voice AI Clinical Decision Support for ICU Mechanical Ventilation
+> **Real-time, interruptible voice AI agent for ICU physicians** — instant SCCM-guideline-grounded ventilation decisions for ARDS, COPD, ARDS/COPD overlap, weaning failure, and post-operative SBT, with persistent structured case memory.
+ 
+Built for the **[Gemini Live Agent Challenge](https://geminiliveagentchallenge.devpost.com/)** · Live Agent category  
+*Designed by a physician, for physicians.*
 
-> Speak naturally at the bedside. Hear a complete, evidence-based ventilation
-> assessment in seconds. Powered by Gemini Live 2.5 Flash Native Audio on
-> Vertex AI.
+ ---
+## 🩺 The Problem
+
+At 4 AM in an understaffed ICU, a junior physician stands alone 
+in front of a ventilator managing a critically ill patient they 
+were never properly trained to ventilate. Nearly **50% of trainees 
+report dissatisfaction with their MV education**, and real-world 
+data shows **40% of ICU patients receive tidal volumes above the 
+safe limit** — with those exposed for over 24 hours facing **82% 
+higher odds of in-hospital death**. The knowledge was never the 
+problem. Delivery, timing, and format were.
+
+**VentLive AI is the tool that should have been there.**
+
+---
+ 
+## 🔗 Live Demo
+> **[https://your-cloudrun-url.run.app](https://your-cloudrun-url.run.app)**  
+> *(Replace with your deployed Cloud Run URL)*
+ 
+## 📺 Demo Video
+> **[YouTube — VentLive AI Demo](https://youtube.com/your-link)**  
+> *(Replace with your YouTube link)*
+ 
 
 ---
 
@@ -20,6 +44,7 @@
    - [Local Development](#local-development)
    - [Cloud Deployment](#cloud-deployment)
 8. [Project Structure](#project-structure)
+   
 
 ---
 
