@@ -292,36 +292,27 @@ external services:
 
 ## Architecture Diagram
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) and
-[`architecture.html`](./architecture.html) (interactive, open in browser)
-for the full annotated system diagram including:
+**[→ Open Interactive Architecture Diagram](https://ventassist-dev.github.io/ventlive-ai/architecture.html)**
+*(Explore all 4 layers interactively with tabs)*
+
+### Layer 1 — System overview
+![Layer 1 System Overview](./VentLive_layer1_overview.png)
+
+### Layer 2 — 13-step clinical pipeline
+![Layer 2 Clinical Pipeline](./VentLive_layer2_pipeline.png)
+
+### Layer 3 — Voice data flow
+![Layer 3 Voice Flow](./VentLive_layer3_voice.png)
+
+### Layer 4 — Graceful degradation
+![Layer 4 Graceful Degradation](./VentLive_layer4_degradation.png)
+
+The full interactive diagram covers:
 - Complete data flow from doctor speech to spoken response
 - 13-step clinical pipeline detail
 - Module dependency DAG
 - Graceful degradation chain
 - WebSocket message protocol (all 17 message types)
-
-**System overview:**
-```
-[ICU Physician]
-      │
-      ▼  Voice (PCM 16kHz) + Text
-[Frontend: Vanilla JS/HTML — Mobile & Tablet Responsive]
-      │  WebSocket /ws/live/{case_id}  +  REST API
-      ▼
-[FastAPI Backend — Google Cloud Run]
-      ├── live_session.py     ← Gemini 2.5 Flash Live (voice stream)
-      ├── gemini_handler.py   ← Gemini 2.5 Flash (extraction & analysis)
-      ├── vent_reasoning.py   ← Clinical decision engine (5 branches)
-      ├── case_memory.py      ← Structured patient case state
-      └── main.py             ← FastAPI app + WebSocket handler
-           │
-           ▼
-      [Firestore]             ← Persistent structured case memory
-           │
-           ▼
-      [Vertex AI]             ← Gemini 2.5 Flash Live + Gemini 2.5 Flash
-```
 
 ---
 
