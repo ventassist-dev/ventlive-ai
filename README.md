@@ -341,7 +341,7 @@ The full interactive diagram covers:
 
 VentLive AI runs exclusively on Google Cloud infrastructure.
 
-- **Cloud Run service URL:** `https://ventlive-ai-xxxx-uc.a.run.app`
+- **Cloud Run service URL:** `https://ventlive-ai-270502917056.us-central1.run.app`
   *(replace with your deployed URL)*
 - **GCP Project:** `ventlive-ai`
 - **Active GCP services:** Cloud Run · Firestore · Vertex AI
@@ -421,7 +421,7 @@ The project demo video shows:
 #### Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/ventlive-ai.git
+git clone https://github.com/ventassist-dev/ventlive-ai.git
 cd ventlive-ai
 ```
 
@@ -623,7 +623,7 @@ gcloud run deploy ventlive-ai \
 Replace the BACKEND constant in `index.html` with your
 Cloud Run service URL:
 ```javascript
-const BACKEND = "https://ventlive-ai-xxxx-uc.a.run.app";
+const BACKEND = "https://ventlive-ai-270502917056.us-central1.run.app";
 ```
 
 Deploy `index.html` to Firebase Hosting, Cloud Storage static site,
@@ -633,7 +633,7 @@ or any CDN.
 
 ```bash
 # SSH into your VM, then:
-git clone https://github.com/your-username/ventlive-ai.git
+git clone https://github.com/ventassist-dev/ventlive-ai.git
 cd ventlive-ai
 pip install fastapi uvicorn google-genai google-cloud-firestore pydantic
 
@@ -791,12 +791,6 @@ Submitted to the **Gemini Live Agent Challenge** (February–March 2026).
 
 *"A physician who had never written a function built the tool that should
 have existed the night that patient died."*
-
----
-
-## License
-
-[MIT License](./LICENSE)
 
 ---
 
