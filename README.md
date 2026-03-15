@@ -11,7 +11,7 @@ Built for the **[Gemini Live Agent Challenge](https://geminiliveagentchallenge.d
 ---
 
 ## 🔗 Live Demo
-**[https://ventlive-ai-270502917056.us-central1.run.app](https://ventlive-ai-270502917056.us-central1.run.app)**
+**[https://ventassist-dev.github.io/ventlive-ai/index.html](https://ventassist-dev.github.io/ventlive-ai/index.html)**
 
 
 ## 📺 Demo Video
