@@ -82,7 +82,7 @@ The knowledge was never the problem. Delivery, timing, and format were.
 
 ---
 
-## What It Does
+## 🤖 What It Does
 
 VentLive AI is a real-time, voice-interactive clinical decision support agent
 for ICU physicians managing mechanically ventilated patients.
@@ -119,7 +119,7 @@ never a half-formed one generated mid-reasoning.
 
 ---
 
-## Features
+## ✨ Features
 
 ### Voice Interface
 - **Always-on microphone** — no push-to-talk required
@@ -197,9 +197,12 @@ never a half-formed one generated mid-reasoning.
   patient's chronic baseline.
 - SpO₂ desaturation guard — never carries forward old SpO₂ if a drop
   is reported in the same input
-- ARDS/COPD overlap priority logic — oxygenation-first when P/F < 150,
-  hyperinflation-first when auto-PEEP detected; mandatory escalation
-  flags active for both conditions simultaneously
+- ARDS/COPD overlap — dedicated branch runs both ARDS and COPD
+  constraint sets simultaneously; when auto-PEEP is detected,
+  COPD hyperinflation controls are inserted at the top of the
+  action list before ARDS steps; when P/F < 150, ARDS rescue
+  interventions are added on top of active COPD constraints —
+  neither condition's danger signals can silence the other
 
 ### Patient Management
 - Create up to 50 patients per Firestore collection (configurable)
@@ -306,8 +309,8 @@ external services:
 | EOLIA Trial | VV-ECMO referral criteria |
 | Berlin Definition | ARDS classification |
 | Rice 2007 | S/F ratio validation (SpO₂ surrogate for P/F) |
-| VUMC Protocols | Surgical critical care service |
-| Deranged Physiology | PEEP optimization, extubation readiness |
+| Additional References |VUMC Protocols, Surgical critical care service, Deranged Physiology, PEEP optimization, extubation readiness |
+
 
 ---
 
@@ -414,8 +417,8 @@ The project demo video shows:
 
 ### Local Development
 
-> For complete Docker build, run, stop, and cleanup commands see
-> [`DOCKER.md`](./DOCKER.md)
+> **Note:** For complete Docker build, run, stop, and cleanup commands
+> see [`DOCKER.md`](./DOCKER.md).
 ```
 
 #### Step 1 — Clone the Repository
@@ -598,7 +601,7 @@ gcloud run deploy ventlive-ai \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --memory 1Gi \
+  --memory 512Mi \
   --timeout 3600 \
   --set-env-vars GCP_PROJECT=YOUR_PROJECT_ID \
   --set-env-vars GCP_LOCATION=us-central1 \
