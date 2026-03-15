@@ -350,7 +350,7 @@ VentLive AI runs exclusively on Google Cloud infrastructure.
 - **Cloud Run service URL:** `https://ventlive-ai-270502917056.us-central1.run.app`
 - **GCP Project:** `ventlive-ai`
 - **Active GCP services:** Cloud Run · Firestore · Vertex AI
-- **Deployment recording:** *(link to your GCP console screen recording)*
+- **Deployment recording:** *[https://youtu.be/aVgvyu-R1Aw](https://youtu.be/aVgvyu-R1Aw)*
 
 ### GCP Services Active in Submitted Code
 
