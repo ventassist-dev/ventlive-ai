@@ -43,24 +43,25 @@ see [Spin-Up Instructions](#spin-up-instructions) below.
 
 ## Table of Contents
 
-1. [The Problem](#the-problem)
-2. [What It Does](#what-it-does)
-3. [Features](#features)
-4. [Technologies Used](#technologies-used)
-5. [Third-Party Integrations](#third-party-integrations)
-6. [Architecture Diagram](#architecture-diagram)
-7. [Google Cloud Deployment Proof](#google-cloud-deployment-proof)
-8. [Spin-Up Instructions](#spin-up-instructions)
+## Table of Contents
+
+1. [The Problem](#-the-problem)
+2. [What It Does](#-what-it-does)
+3. [Features](#-features)
+4. [Technologies Used](#️-technologies-used)
+5. [Third-Party Integrations](#-third-party-integrations)
+6. [Architecture Diagram](#️-architecture-diagram)
+7. [Google Cloud Deployment Proof](#️-google-cloud-deployment-proof)
+8. [Spin-Up Instructions](#-spin-up-instructions)
    - [Prerequisites](#prerequisites)
    - [Local Development](#local-development)
    - [Cloud Deployment](#cloud-deployment)
    - [Automated Deployment](#automated-deployment)
-9. [Project Structure](#project-structure)
-10. [Findings & Learnings](#findings--learnings)
-11. [What's Next](#whats-next)
-12. [Clinical Disclaimer](#clinical-disclaimer)
-13. [About](#about)
-14. [License](#license)
+9. [Project Structure](#-project-structure)
+10. [Findings & Learnings](#-findings--learnings)
+11. [What's Next](#-whats-next)
+12. [Clinical Disclaimer](#️-clinical-disclaimer)
+13. [About](#️-about)
 
 ---
 
@@ -708,6 +709,7 @@ ventlive-ai/
 ├── requirements.txt     # Python dependencies
 │
 └── .env.example         # Environment variable template
+                         # documented defaults for all 14 variables
 ```
 
 ---
@@ -726,8 +728,8 @@ vent changes, COPD rapid PaCO₂ correction risk, and SpO₂ desaturation
 masking by stale values.
 
 **Technically:** Building a real-time AI agent revealed that the hardest
-problems were not code — they were architecture.Injecting text into a live Gemini session while audio is streamingrequires careful sequencing — a single `session.send(input=text,end_of_turn=True)` call with a settling delay, rather than multi-step patterns that corrupt the session's turn state; graceful degradation
-must be designed before the happy path, not after;; and the
+problems were not code — they were architecture. Injecting text into a live Gemini session while audio is streaming requires careful sequencing — a single `session.send(input=text,end_of_turn=True)` call with a settling delay, rather than multi-step patterns that corrupt the session's turn state; graceful degradation
+must be designed before the happy path, not after; and the
 difference between version one and version three was not more code — it was
 better thinking before the code. Constraints force good architecture.
 The bilingual normalization layer that emerged from a model availability
