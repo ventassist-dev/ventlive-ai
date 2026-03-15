@@ -696,7 +696,11 @@ ventlive-ai/
 ├── deploy.sh            # Automated Cloud Run deployment script
 │
 ├── Dockerfile           # Container definition for Cloud Run
-|
+│
+├── .dockerignore        # Excludes secrets, cache, docs, and dev
+│                        # tooling from Docker image — surgical
+│                        # credential patterns, never broad *.json
+│
 ├── DOCKER.md            # Complete Docker command reference —
 │                        # build, run, verify, stop, cleanup,
 │                        # port conflict detection, rebuild workflow
