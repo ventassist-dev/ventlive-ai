@@ -37,7 +37,7 @@ curl https://ventlive-ai-270502917056.us-central1.run.app/health
 ```
 
 For full local setup and Cloud Run deployment instructions
-see [Spin-Up Instructions](#spin-up-instructions) below.
+see [Spin-Up Instructions](#-spin-up-instructions) below.
 
 ---
 
