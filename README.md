@@ -15,8 +15,8 @@ Built for the **[Gemini Live Agent Challenge](https://geminiliveagentchallenge.d
 
 
 ## 📺 Demo Video
-**[YouTube — VentLive AI Demo](https://youtube.com/your-link)**
-*(Replace with your YouTube link — must be public, not unlisted)*
+**[YouTube — VentLive AI Demo](https://youtu.be/ZSB2BdnKjZ4)**
+
 
 ---
 
