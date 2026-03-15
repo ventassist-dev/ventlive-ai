@@ -226,7 +226,7 @@ never a half-formed one generated mid-reasoning.
 
 ---
 
-## Technologies Used
+## 🛠️ Technologies Used
 
 | Category | Technology |
 |---|---|
@@ -250,7 +250,7 @@ never a half-formed one generated mid-reasoning.
 
 ---
 
-## Third-Party Integrations
+## 🔌 Third-Party Integrations
 
 ### Google Gemini — Gemini Live 2.5 Flash Native Audio
 - **Provider:** Google Cloud / Vertex AI
@@ -309,12 +309,15 @@ external services:
 | EOLIA Trial | VV-ECMO referral criteria |
 | Berlin Definition | ARDS classification |
 | Rice 2007 | S/F ratio validation (SpO₂ surrogate for P/F) |
-| Additional References |VUMC Protocols, Surgical critical care service, Deranged Physiology, PEEP optimization, extubation readiness |
+
+*Additional references: VUMC Surgical Critical Care Protocols,
+Deranged Physiology (PEEP optimization, extubation readiness)*
+
 
 
 ---
 
-## Architecture Diagram
+## 🏗️ Architecture Diagram
 
 **[→ Open Interactive Architecture Diagram](https://ventassist-dev.github.io/ventlive-ai/architecture.html)**
 *(Explore all 4 layers interactively with tabs)*
@@ -340,12 +343,11 @@ The full interactive diagram covers:
 
 ---
 
-## Google Cloud Deployment Proof
+## ☁️ Google Cloud Deployment Proof
 
 VentLive AI runs exclusively on Google Cloud infrastructure.
 
 - **Cloud Run service URL:** `https://ventlive-ai-270502917056.us-central1.run.app`
-  *(replace with your deployed URL)*
 - **GCP Project:** `ventlive-ai`
 - **Active GCP services:** Cloud Run · Firestore · Vertex AI
 - **Deployment recording:** *(link to your GCP console screen recording)*
@@ -401,7 +403,7 @@ The project demo video shows:
 
 ---
 
-## Spin-Up Instructions
+## 🚀 Spin-Up Instructions
 
 ### Prerequisites
 
@@ -419,7 +421,6 @@ The project demo video shows:
 
 > **Note:** For complete Docker build, run, stop, and cleanup commands
 > see [`DOCKER.md`](./DOCKER.md).
-```
 
 #### Step 1 — Clone the Repository
 
@@ -658,7 +659,7 @@ required environment variables.
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 ventlive-ai/
@@ -721,9 +722,8 @@ vent changes, COPD rapid PaCO₂ correction risk, and SpO₂ desaturation
 masking by stale values.
 
 **Technically:** Building a real-time AI agent revealed that the hardest
-problems were not code — they were architecture. Two-step
-`send_client_content` patterns corrupt Gemini's turn state; graceful
-degradation must be designed before the happy path, not after; and the
+problems were not code — they were architecture.Injecting text into a live Gemini session while audio is streamingrequires careful sequencing — a single `session.send(input=text,end_of_turn=True)` call with a settling delay, rather than multi-step patterns that corrupt the session's turn state; graceful degradation
+must be designed before the happy path, not after;; and the
 difference between version one and version three was not more code — it was
 better thinking before the code. Constraints force good architecture.
 The bilingual normalization layer that emerged from a model availability
@@ -765,7 +765,7 @@ Additional roadmap items:
 
 ---
 
-## Clinical Disclaimer
+## ⚕️ Clinical Disclaimer
 
 VentLive AI is a clinical decision **support** tool built for educational
 and research purposes. All recommendations are for informational purposes
