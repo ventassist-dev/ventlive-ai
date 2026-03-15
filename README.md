@@ -581,21 +581,10 @@ python -m http.server 3000
 
 #### Option A — Google Cloud Run (Recommended)
 
-**Step 1 — Create a Dockerfile**
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY . .
-
-RUN pip install --no-cache-dir \
-    fastapi uvicorn google-genai \
-    google-cloud-firestore pydantic
-
-EXPOSE 8080
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
-```
+**Step 1 — Use the included Dockerfile**
+The repository includes a production-ready `Dockerfile` with all
+required system dependencies, non-root user, and health check.
+No modifications needed — proceed directly to Step 2.
 
 **Step 2 — Build and Push**
 ```bash
