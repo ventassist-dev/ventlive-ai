@@ -194,7 +194,7 @@ never a half-formed one generated mid-reasoning.
 - COPD over-correction guard — PaCO₂ drop > 20 mmHg or > 50% within
   24 h triggers intracranial haemorrhage risk warning (GOLD 2024)
 - COPD baseline PaCO₂ protection — warns before correcting below
-  patient's chronic baseline
+  patient's chronic baseline. VentLive AI stores each COPD patient's chronic baseline PaCO₂ at admission, monitors every subsequent ABG against that individual floor rather than the textbook normal, and alerts the physician in real time if mechanical ventilation is correcting CO₂ faster or further than the patient's physiology can safely tolerate, preventing the post-hypercapnic metabolic alkalosis, cerebral vasoconstriction, and ventilator dependency that over-correction reliably produces
 - SpO₂ desaturation guard — never carries forward old SpO₂ if a drop
   is reported in the same input
 - ARDS/COPD overlap priority logic — oxygenation-first when P/F < 150,
